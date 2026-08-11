@@ -38,13 +38,13 @@
 
 ## P1 — 동향 워크플로·다중그룹 (사용성)
 
-### P1.1 MCP `scienceon_collect_groups` 도구 — M
+### P1.1 MCP `scienceON_collect_groups` 도구 — M ✅ **완료 (v0.3.0)**
 - 다중 그룹(field/terms/contains/lang/max)을 **MCP 한 번에** → config 없이 대화형 동향수집.
-  (현재 다중그룹은 CLI config 전용)
+  `save=false` 로 저장 없이 미리보기 가능(응답은 앞 100건만).
 
 ### P1.2 동향 산출 헬퍼 — M
 - 수집 코퍼스에서 **연도×건수 피벗 · 키워드 빈도/신흥어 · 게재지 분포** 를 CSV/표로.
-  CLI `scienceon trends --input <json>` / MCP `scienceon_trends`. (정식 토픽모델은 R STM 핸드오프)
+  CLI `scienceon trends --input <json>` / MCP `scienceON_trends`. (정식 토픽모델은 R STM 핸드오프)
 
 ### P1.3 REPORT/ATT 통합 동향 프리셋 — S
 - ARTI+REPORT(+ATT) 다중 target 수집을 하나의 config 로(현재 target 단일). `targets: [ARTI, REPORT]`.
@@ -60,11 +60,11 @@
 
 ### P2.2 링크리졸버 RESOLVER — M
 - `atitle`/`id`(CN·DOI)/`issn`+`volume`+`issue`+`date`+`spage` 로 **원문 링크 해석**.
-  도구 `scienceon_resolve` → 수집 레코드의 원문 접근성 보강.
+  도구 `scienceON_resolve` → 수집 레코드의 원문 접근성 보강.
 
 ### P2.3 인용·참고·관련 문헌 — L
 - 상세(browse) 응답의 `SimilarPubyear`(관련)/`CitingPubyear`(인용)/`CitedPubyear`(참고) 활용 +
-  다중 API(CallApiInfo) 체이닝 → **인용 네트워크** 추출 `scienceon_citations`.
+  다중 API(CallApiInfo) 체이닝 → **인용 네트워크** 추출 `scienceON_citations`.
 
 ### P2.4 권호 TOC(VOLUME)·콘텐츠 추천(RECOMMEND) — S
 - VOLUME: `cn`+`volno` 목차. RECOMMEND: `recomType`+`cn`+`uid` 관련문헌.
@@ -73,10 +73,10 @@
 
 ## P3 — 견고성·배포 (공개 품질)
 
-### P3.1 자동 테스트(pytest) — M
+### P3.1 자동 테스트(pytest) — M ✅ **완료** (26종)
 - 파서(저장된 XML 픽스처)·토큰 암호화(AES 벡터)·쿼리 빌더·exporters 단위테스트. 라이브는 mock.
 
-### P3.2 CI + 배포 — M
+### P3.2 CI + 배포 — M ✅ **대부분 완료** (CI + 태그 릴리스 + MCP 레지스트리 발행. PyPI 는 미배포)
 - GitHub Actions(ruff lint + pytest), 버전 태그·릴리스, **PyPI 배포**(`uvx scienceon-mcp`로 설치 없이 실행).
 
 ### P3.3 운영 설정·로깅 — S

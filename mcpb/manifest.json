@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "scienceon-mcp",
   "display_name": "ScienceON 수집기 (scienceon-mcp)",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "KISTI ScienceON OpenAPI 문헌 검색·메타데이터 수집기 — 다중쿼리·와일드카드·후처리 필터·xlsx/csv/json/sqlite 대량 내보내기",
   "author": { "name": "Yeondong Yang", "url": "https://github.com/rubatoyd/scienceON-mcp" },
   "homepage": "https://github.com/rubatoyd/scienceON-mcp",
@@ -64,7 +64,8 @@
     { "name": "scienceON_status", "description": "연결/토큰 상태 점검 (+공인 IP)" },
     { "name": "scienceON_search", "description": "문헌 검색 — 다중쿼리·와일드카드·contains·lang·연도범위. total·truncated 동반 반환" },
     { "name": "scienceON_detail", "description": "제어번호(CN)로 상세·초록 조회" },
-    { "name": "scienceON_export", "description": "대량 수집 후 xlsx/csv/json/sqlite 저장. meta(축별 total·truncated) 동반 — 상한 절단 시 경고" }
+    { "name": "scienceON_export", "description": "대량 수집 후 xlsx/csv/json/sqlite 저장. meta(축별 total·truncated) 동반 — 상한 절단 시 경고" },
+    { "name": "scienceON_collect_groups", "description": "다중 검색그룹(그룹별 field·contains·lang·max)을 한 코퍼스로 합쳐 수집 — config 없이 대화형. meta.truncated 동반" }
   ],
   "compatibility": {
     "platforms": ["win32", "darwin", "linux"],

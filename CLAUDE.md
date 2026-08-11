@@ -61,6 +61,21 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 - ✅ pytest 11종 + GitHub Actions CI
 - ⏳ (선택) `.mcpb` 데스크톱 실설치 검증, ROADMAP(docs/ROADMAP.md) P0~P3
 
+### 2026-08-11 (3) — v0.3.0: 예외 누수 차단 · annotations · 다중그룹 MCP 도구
+kci 와의 **비대칭 해소**가 주제다. 이번 세션에서 "한쪽에서 고친 결함이 다른 쪽에 남아 있는" 패턴이
+세 번째 반복됐다(mcp 상한 → 조용한 절단 → 예외 누수).
+
+- 🔴 **예외 누수 차단** — 도구들이 `ScienceONError` 만 잡아, 자격증명 누락이 `RuntimeError` 로
+  **그대로 새어나가는 것을 실측 확인**했다(네트워크 타임아웃·XML 파싱 오류도 동일). kci 의 `_safe`
+  데코레이터를 이식해 전 도구가 항상 dict 를 반환한다. kci 의 `SUBMISSION.md` 는 "예외 누수 없음"을
+  디렉터리 심사 기준으로 명시하는데 이쪽엔 그 처방이 없었다.
+- 🟡 **MCP annotations 선언** — `readOnlyHint`/`openWorldHint`/`destructiveHint`. 조회 3종은 읽기,
+  파일을 만드는 `scienceON_export`·`scienceON_collect_groups` 는 쓰기(비파괴)로 표시. kci 와 동일.
+- 🟢 **`scienceON_collect_groups` 신설 (ROADMAP P1.1)** — 클라이언트·CLI 는 다중그룹 수집을
+  지원했으나 **MCP 에는 노출되지 않아** Claude 에서 쓸 수 없었다. 그룹별로 다른 field·contains·lang·max
+  를 걸어 한 코퍼스로 합친다(config 파일 불필요). `save=false` 면 저장 없이 미리보기(응답 앞 100건만).
+- 테스트 16 → **26**(`tests/test_server.py` 신설 — 예외 누수 회귀·annotations·그룹 수집).
+
 ### 2026-08-11 (2) — v0.2.0: 조용한 절단 제거 · 표기 통일 · truststore 정식화 · 릴리스 파이프라인
 - 🟢 **릴리스 파이프라인 신설(kci 이식)** — 기존에는 CI 가 테스트만 돌리고 릴리스·레지스트리
   경로가 아예 없었다. `.github/workflows/publish-mcp.yml`(태그 푸시 → OS별 PyInstaller 바이너리

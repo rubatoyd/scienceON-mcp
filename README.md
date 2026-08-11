@@ -83,7 +83,7 @@ claude mcp add scienceon -- uvx --from "git+https://github.com/rubatoyd/scienceO
 > `…\.venvs\scienceon-mcp\Scripts\python.exe -m scienceon_mcp.server`
 
 연결되면 Claude에서 `scienceON_search`, `scienceON_detail`, `scienceON_export`,
-`scienceON_status` 도구를 사용할 수 있습니다.
+`scienceON_collect_groups`, `scienceON_status` 도구를 사용할 수 있습니다.
 
 ## 5) CLI 사용 (배치·재현)
 

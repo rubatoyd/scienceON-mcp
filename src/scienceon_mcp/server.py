@@ -8,6 +8,7 @@ Claude 등 MCP 클라이언트에 검색/상세/수집 도구를 노출한다.
 """
 from __future__ import annotations
 
+import functools
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,28 @@ from mcp.server.fastmcp import FastMCP
 from .client import ScienceONClient, ScienceONError
 
 mcp = FastMCP("scienceON")
+
+
+def _safe(fn):
+    """도구는 **항상 JSON 직렬화 가능한 dict** 를 반환 — 어떤 예외도 도구 밖으로 누수 금지.
+
+    (네트워크/SSL/HTTP/파싱/자격증명 예외가 MCP 프로토콜 밖으로 새어 클라이언트가 깨지는 것을 방지.
+    ScienceONError 만 잡던 시절에는 자격증명 누락이 RuntimeError 로 그대로 새어나갔다 — 실측 확인.
+    자격증명 자체는 auth/_call 단계에서 메시지에 실리지 않으므로 노출 위험 없음.)
+    """
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:  # noqa: BLE001
+            return {"error": f"{type(e).__name__}: {e}"}
+    return wrapper
+
+
+# 도구 안전성 힌트(MCP annotations) — 디렉터리 심사·클라이언트 표시에 사용.
+# 전부 외부 API 조회(openWorld). export 만 파일 생성(쓰기, 비파괴).
+_READ = {"readOnlyHint": True, "openWorldHint": True}
+_WRITE = {"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True}
 
 
 def _client() -> ScienceONClient:
@@ -36,7 +59,8 @@ def _terms(query: str | None, queries: list[str] | None) -> list[str]:
     return [query] if query and query.strip() else []
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ)
+@_safe
 def scienceON_status() -> dict:
     """ScienceON 연결/토큰 상태 점검. 실패 시 원인 힌트와 현재 공인 IP 를 반환."""
     info: dict[str, Any] = {}
@@ -55,7 +79,8 @@ def scienceON_status() -> dict:
     return info
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ)
+@_safe
 def scienceON_search(query: str | None = None, queries: list[str] | None = None,
                      target: str = "ARTI", field: str = "BI",
                      year_from: int | None = None, year_to: int | None = None,
@@ -92,7 +117,8 @@ def scienceON_search(query: str | None = None, queries: list[str] | None = None,
     return out
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ)
+@_safe
 def scienceON_detail(control_no: str, target: str = "ARTI") -> dict:
     """제어번호(CN)로 상세 서지·초록 조회."""
     try:
@@ -102,7 +128,8 @@ def scienceON_detail(control_no: str, target: str = "ARTI") -> dict:
     return r.to_row() if r else {"error": "결과 없음"}
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITE)
+@_safe
 def scienceON_export(query: str | None = None, queries: list[str] | None = None,
                      target: str = "ARTI", field: str = "BI",
                      year_from: int | None = None, year_to: int | None = None,
@@ -137,6 +164,55 @@ def scienceON_export(query: str | None = None, queries: list[str] | None = None,
            "meta": {k: meta[k] for k in ("axes", "axes_planned", "axes_run", "union",
                                          "union_upper_bound", "max_records", "truncated",
                                          "returned") if k in meta}}
+    if meta.get("warning"):
+        out["warning"] = meta["warning"]
+    return out
+
+
+@mcp.tool(annotations=_WRITE)
+@_safe
+def scienceON_collect_groups(groups: list[dict], target: str = "ARTI",
+                             year_from: int | None = None, year_to: int | None = None,
+                             max_records: int = 3000, save: bool = True,
+                             formats: list[str] | None = None,
+                             out_dir: str | None = None, name: str | None = None) -> dict:
+    """여러 **검색 그룹**을 한 코퍼스로 합쳐 수집(CN 중복제거). config 파일 없이 대화형으로.
+
+    그룹마다 다른 필드·후처리 필터를 걸 수 있어, 단일 검색어로는 못 만드는 코퍼스를 만든다.
+    각 group = {"field": "BI", "terms": [...], "contains": [...], "lang": [...], "max": N}
+      field   : BI(전체)·TI(제목)·AB(초록)·AU(저자)·KW(키워드)
+      terms   : 그 필드로 **개별 검색**할 용어들(와일드카드 `*` 가능)
+      contains: 원본 전체필드 substring 후처리 필터(노이즈 제거, 대소문자 무시)
+      lang    : 허용 언어(예: ["한국어"]) — 국문 논문 한정 등
+      max     : 그 그룹만의 상한(미지정 시 max_records)
+
+    예) 변별력 있는 단어는 BI 로 그대로, 색인 안 되는 토큰은 TI 와일드카드 + contains 로 정밀화:
+        [{"field":"BI","terms":["경계선지능","경계선 지능"]},
+         {"field":"TI","terms":["느린*"],"contains":["느린학습자","느린 학습자"]}]
+
+    save=true(기본) 면 파일로 저장하고 경로를 반환한다. save=false 면 레코드를 직접 반환하되
+    응답 폭주를 막기 위해 **앞 100건만** 싣는다(meta 는 전량 기준).
+
+    ⚠️ meta.truncated=true 면 상한에 걸려 잘린 것이다 — meta.union_upper_bound(그룹별 total 합)
+    위로 max_records 를 올려 재수집해야 코퍼스가 완결된다.
+    """
+    if not groups:
+        return {"error": "groups 는 최소 1개 필요합니다. 예: [{\"field\":\"BI\",\"terms\":[\"경계선지능\"]}]"}
+    try:
+        recs, meta = _client().search_groups_meta(
+            target, groups, year=_year_str(year_from, year_to), max_records=max_records)
+    except ScienceONError as e:
+        return {"error": str(e)}
+    out: dict[str, Any] = {"count": len(recs), "meta": meta}
+    if save:
+        from .exporters import export
+        fmts = formats or ["xlsx", "csv", "json"]
+        nm = (name or f"{target}_groups").replace(" ", "_")[:60]
+        base = out_dir or str(Path.home() / "scienceon-output")
+        out["files"] = export(recs, fmts, base, nm)
+    else:
+        out["records"] = [r.to_row() for r in recs[:100]]
+        out["records_truncated_for_response"] = len(recs) > 100
     if meta.get("warning"):
         out["warning"] = meta["warning"]
     return out
