@@ -70,7 +70,12 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
   ⚠️ 레지스트리 이름은 **소문자** `io.github.rubatoyd/scienceon-mcp` — 저장소명(`scienceON-mcp`)과
   다르다. 배포명(`scienceon-mcp`)에 맞췄고 레지스트리 이름 대소문자 취급이 불확실하기 때문이다.
   ⚠️ pycryptodome 은 import 명이 `Crypto` 라 PyInstaller `--collect-all Crypto` 가 필요하다(kci 엔 없는 항목).
-  ⏭️ **아직 태그를 푸시하지 않았다** — 발행은 공개 행위이므로 별도 확인 후 진행.
+- ✅ **v0.2.0 발행 완료 (2026-08-11)** — 이 저장소의 **첫 레지스트리 발행**. 신설 파이프라인이 첫 실행에
+  전 단계 통과했다(win/macos/linux 바이너리 빌드 → 릴리스 → OIDC 발행).
+  레지스트리 실조회: `io.github.rubatoyd/scienceon-mcp v0.2.0 status:active`.
+  릴리스 자산 4종 — 경량 `scienceon-mcp.mcpb`(2KB) + 자체완결 linux 42MB·win 27MB·macos 25MB.
+  ⏭️ 자체완결 바이너리의 **런타임 기동 검증은 아직 안 했다**(빌드 성공 ≠ 실행 성공).
+     PyInstaller 는 hidden import 누락이 실행 시점에야 드러난다 — 특히 `Crypto`.
 - 🟡 **truststore 를 정식 의존성으로 이관** — 이전에는 MCP 등록 명령줄
   (`uv run --with truststore … inject_into_ssl()`)에만 걸려 있어 **`.mcpb` 번들 경로에는 아예
   들어가지 않았다.** 교육망·사내망 SSL 인터셉션 환경에서 `.mcpb` 설치본이 인증서 오류로 실패한다.
