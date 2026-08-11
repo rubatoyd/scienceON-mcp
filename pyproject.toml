@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: Text Processing :: Indexing",
 ]
 dependencies = [
-    "mcp>=1.2.0",
+    "mcp>=1.2.0,<2",  # 상한 필수 — mcp 2.0 에서 mcp.server.fastmcp 제거됨
     "requests>=2.31.0",
     "pycryptodome>=3.20.0",
     "openpyxl>=3.1.0",
@@ -35,9 +35,9 @@ scienceon-mcp = "scienceon_mcp.server:main"
 scienceon = "scienceon_mcp.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/rubato103/scienceon-mcp"
-Repository = "https://github.com/rubato103/scienceon-mcp"
-Issues = "https://github.com/rubato103/scienceon-mcp/issues"
+Homepage = "https://github.com/rubatoyd/scienceon-mcp"
+Repository = "https://github.com/rubatoyd/scienceon-mcp"
+Issues = "https://github.com/rubatoyd/scienceon-mcp/issues"
 
 [dependency-groups]
 dev = ["pytest>=8.0"]

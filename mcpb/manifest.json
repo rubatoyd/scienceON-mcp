@@ -4,9 +4,9 @@
   "display_name": "ScienceOn 수집기 (scienceon-mcp)",
   "version": "0.1.0",
   "description": "KISTI ScienceOn OpenAPI 문헌 검색·메타데이터 수집기 — 다중쿼리·와일드카드·후처리 필터·xlsx/csv/json/sqlite 대량 내보내기",
-  "author": { "name": "Yeondong Yang", "url": "https://github.com/rubato103/scienceon-mcp" },
-  "homepage": "https://github.com/rubato103/scienceon-mcp",
-  "documentation": "https://github.com/rubato103/scienceon-mcp#readme",
+  "author": { "name": "Yeondong Yang", "url": "https://github.com/rubatoyd/scienceon-mcp" },
+  "homepage": "https://github.com/rubatoyd/scienceon-mcp",
+  "documentation": "https://github.com/rubatoyd/scienceon-mcp#readme",
   "license": "MIT",
   "keywords": ["scienceon", "kisti", "openapi", "academic", "literature", "metadata"],
   "server": {
@@ -14,7 +14,7 @@
     "entry_point": "uvx",
     "mcp_config": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/rubato103/scienceon-mcp", "scienceon-mcp"],
+      "args": ["--from", "git+https://github.com/rubatoyd/scienceon-mcp", "scienceon-mcp"],
       "env": {
         "SCIENCEON_AUTH_KEY": "${user_config.auth_key}",
         "SCIENCEON_CLIENT_ID": "${user_config.client_id}",

@@ -1,6 +1,6 @@
 # scienceon-mcp
 
-[![CI](https://github.com/rubato103/scienceon-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/rubato103/scienceon-mcp/actions/workflows/ci.yml)
+[![CI](https://github.com/rubatoyd/scienceon-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/rubatoyd/scienceon-mcp/actions/workflows/ci.yml)
 
 KISTI **ScienceOn OpenAPI** 문헌 검색·메타데이터 수집기 — **MCP 서버 + CLI**.
 자기 ScienceOn API 키만 발급받으면 누구나 Claude(또는 CLI)에서 국내외 논문·보고서
@@ -37,7 +37,7 @@ KISTI **ScienceOn OpenAPI** 문헌 검색·메타데이터 수집기 — **MCP �
 **전제: [uv](https://docs.astral.sh/uv/) 설치** (Windows: `winget install astral-sh.uv`).
 
 ### 방법 0 — 원클릭 (.mcpb, Claude Desktop)
-[Releases](https://github.com/rubato103/scienceon-mcp/releases) 에서 **`scienceon-mcp.mcpb`** 다운로드 →
+[Releases](https://github.com/rubatoyd/scienceon-mcp/releases) 에서 **`scienceon-mcp.mcpb`** 다운로드 →
 Claude Desktop 에 더블클릭/드래그 → **설치 창에서 인증키·Client ID·MAC 입력** → 완료.
 
 ### 방법 A — uvx (설정 직접, 설치 불필요)
@@ -59,7 +59,7 @@ clone·venv 없이 아래 4)의 `uvx` 설정이 GitHub 버전을 자동 빌드·
   "mcpServers": {
     "scienceon": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/rubato103/scienceon-mcp", "scienceon-mcp"],
+      "args": ["--from", "git+https://github.com/rubatoyd/scienceon-mcp", "scienceon-mcp"],
       "env": {
         "SCIENCEON_AUTH_KEY": "발급_32자리_인증키",
         "SCIENCEON_CLIENT_ID": "발급_client_id",
@@ -73,7 +73,7 @@ clone·venv 없이 아래 4)의 `uvx` 설정이 GitHub 버전을 자동 빌드·
 **Claude Code**:
 
 ```bash
-claude mcp add scienceon -- uvx --from "git+https://github.com/rubato103/scienceon-mcp" scienceon-mcp
+claude mcp add scienceon -- uvx --from "git+https://github.com/rubatoyd/scienceon-mcp" scienceon-mcp
 ```
 
 > 첫 실행 시 빌드(수 초), 이후 캐시. 최신 반영은 `uvx --refresh ...`.

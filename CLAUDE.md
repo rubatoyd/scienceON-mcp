@@ -55,8 +55,23 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 - 라이브 검증 우선(추정 금지) — 대량 호출 전 소량 시범.
 
 ## 7. 상태
-- ✅ 공개: github.com/rubato103/scienceon-mcp (MIT, Release v0.1.0 + `.mcpb` 원클릭)
+- ✅ 공개: github.com/rubatoyd/scienceon-mcp (MIT, Release v0.1.0 + `.mcpb` 원클릭)
 - ✅ 라이브 검증: 토큰·검색·다중쿼리·와일드카드(`*`)·contains/lang 필터·다중그룹·다중 target(ARTI+REPORT)
 - ✅ 배포 3종: uvx-from-git / `.mcpb`(Claude Desktop) / 로컬(개발). 자격증명은 사용자 환경변수+.env.
 - ✅ pytest 11종 + GitHub Actions CI
 - ⏳ (선택) `.mcpb` 데스크톱 실설치 검증, ROADMAP(docs/ROADMAP.md) P0~P3
+
+### 2026-08-11 — 기동 불능 2건 수정 (자매 프로젝트 kci-openapi-mcp 점검 중 발견)
+- 🔴 **`mcp` SDK 상한 누락으로 서버가 아예 기동 못 하고 있었다** — `mcp>=1.2.0`(상한 없음)이
+  **mcp 2.0** 으로 해석되는데 2.0 은 `mcp.server.fastmcp` 를 제거했다(→ `mcp.server.MCPServer` 체계).
+  `uv run --with "scienceon-mcp @ git+…"` 경로는 **uv.lock 을 보지 않고 매번 새로 해석**하므로
+  lock 에 1.28.0 이 박혀 있어도 소용없었다. 실제 오류: `ModuleNotFoundError: No module named
+  'mcp.server.fastmcp'`. `pyproject.toml` 을 `mcp>=1.2.0,<2` 로 고정(kci 와 동일 처방). 로컬 소스로
+  `initialize` 응답·pytest 11종 통과 확인. ⚠️ **원격 HEAD 를 받아오는 MCP 등록분은 push 해야 반영된다.**
+- ⚠️ **GitHub 계정명 변경 `rubato103` → `rubatoyd`** — `git remote`·`pyproject.toml`·`README`·
+  `mcpb/manifest.json`·`mcpb/README` 갱신. 본 저장소는 `server.json` 이 없어 **레지스트리 미발행**이므로
+  네임스페이스 이관 이슈는 없다(kci 는 해당됨).
+- ⚠️ **프로젝트 내 `.venv/` 파손** — `pyvenv.cfg` 의 home 이 **다른 사용자 프로필** `C:\Users\rubat\…`
+  를 가리켜 `uv lock`·`uv run` 이 exit 103 으로 실패한다(OneDrive 로 유입된 타 PC 산출물, kci 도 동일 증상).
+  우회: `UV_PROJECT_ENVIRONMENT=C:/Users/user/.venvs/scienceon-mcp` (이번에 생성, 클라우드 폴더 밖).
+- ℹ️ `uv lock` 이 lockfile `revision 2 → 3` 을 올린다(uv 0.10 형식). 내용 변경은 mcp specifier 한 줄뿐.
