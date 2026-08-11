@@ -1,4 +1,4 @@
-# ScienceOn 수집 설정 템플릿 — 프로젝트별로 복제해 사용
+# ScienceON 수집 설정 템플릿 — 프로젝트별로 복제해 사용
 #   uv run scienceon collect --config config/<프로젝트명>.yaml
 
 project: borderline

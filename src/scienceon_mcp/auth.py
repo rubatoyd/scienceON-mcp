@@ -1,4 +1,4 @@
-"""AES256 토큰 발급/캐시/갱신 — 공식 ScienceOn 샘플 스킴(라이브 검증 완료).
+"""AES256 토큰 발급/캐시/갱신 — 공식 ScienceON 샘플 스킴(라이브 검증 완료).
 
 암호화(공식 Python 샘플 기준):
   - 평문: {"datetime":"YYYYMMDDHHMMSS","mac_address":"<MAC>"} (compact, 공백 제거)

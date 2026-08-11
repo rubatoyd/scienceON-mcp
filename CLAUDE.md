@@ -1,6 +1,6 @@
 # scienceon-mcp — 프로젝트 지침
 
-> KISTI ScienceOn OpenAPI 문헌 검색·메타데이터 수집기. 누구나 자기 API 키로 쓰는
+> KISTI ScienceON OpenAPI 문헌 검색·메타데이터 수집기. 누구나 자기 API 키로 쓰는
 > **공개 MCP 서버 + CLI**. API 호출 규격은 [docs/SCIENCEON_API_GUIDE.md](docs/SCIENCEON_API_GUIDE.md) 참조.
 
 ## 1. 목표
@@ -11,7 +11,7 @@
 | 항목 | 결정 |
 |------|------|
 | 언어/런타임 | Python 3.10+ (개발 venv는 3.12) |
-| 패키지 관리 | **uv** (pyproject + uv.lock). venv는 **클라우드 폴더 밖** `C:\Users\rubat\.venvs\scienceon-mcp` (`UV_PROJECT_ENVIRONMENT`) |
+| 패키지 관리 | **uv** (pyproject + uv.lock). venv는 **클라우드 폴더 밖** `C:\Users\user\.venvs\scienceon-mcp` (`UV_PROJECT_ENVIRONMENT`, `.claude/settings.local.json` 에 지정) |
 | 의존성 | mcp(FastMCP), requests, pycryptodome, openpyxl, python-dotenv, pyyaml |
 | 인터페이스 | 공용 코어 + **MCP 서버(server.py)** + **CLI(cli.py)** |
 | 수집 대상 | ARTI(논문)·REPORT(보고서) 우선, ATT/RESEARCHER/ORGAN 확장 가능 |
@@ -27,7 +27,7 @@ src/scienceon_mcp/
   parser.py     # XML(.//record/item[@metaCode]) → 정규화
   models.py     # Record 스키마
   exporters.py  # xlsx/csv/json/sqlite
-  server.py     # MCP 도구: scienceon_search/detail/export/status
+  server.py     # MCP 도구: scienceON_search/detail/export/status
   cli.py        # status/search/detail/collect
 docs/           # API 가이드, 워크플로, 프롬프트
 config/         # 검색 설정 템플릿
@@ -55,7 +55,7 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 - 라이브 검증 우선(추정 금지) — 대량 호출 전 소량 시범.
 
 ## 7. 상태
-- ✅ 공개: github.com/rubatoyd/scienceon-mcp (MIT, Release v0.1.0 + `.mcpb` 원클릭)
+- ✅ 공개: github.com/rubatoyd/scienceON-mcp (MIT, Release v0.1.0 + `.mcpb` 원클릭)
 - ✅ 라이브 검증: 토큰·검색·다중쿼리·와일드카드(`*`)·contains/lang 필터·다중그룹·다중 target(ARTI+REPORT)
 - ✅ 배포 3종: uvx-from-git / `.mcpb`(Claude Desktop) / 로컬(개발). 자격증명은 사용자 환경변수+.env.
 - ✅ pytest 11종 + GitHub Actions CI

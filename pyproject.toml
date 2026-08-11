@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "scienceon-mcp"
 version = "0.1.0"
-description = "MCP server + CLI for KISTI ScienceOn OpenAPI — search and collect academic literature metadata"
+description = "MCP server + CLI for KISTI ScienceON OpenAPI — search and collect academic literature metadata"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -35,9 +35,9 @@ scienceon-mcp = "scienceon_mcp.server:main"
 scienceon = "scienceon_mcp.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/rubatoyd/scienceon-mcp"
-Repository = "https://github.com/rubatoyd/scienceon-mcp"
-Issues = "https://github.com/rubatoyd/scienceon-mcp/issues"
+Homepage = "https://github.com/rubatoyd/scienceON-mcp"
+Repository = "https://github.com/rubatoyd/scienceON-mcp"
+Issues = "https://github.com/rubatoyd/scienceON-mcp/issues"
 
 [dependency-groups]
 dev = ["pytest>=8.0"]

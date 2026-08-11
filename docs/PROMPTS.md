@@ -1,6 +1,6 @@
 # Claude 구동용 프롬프트 템플릿
 
-연구 초반 자료수집 단계에서 Claude에게 ScienceOn 수집기를 시키는 프롬프트 모음.
+연구 초반 자료수집 단계에서 Claude에게 ScienceON 수집기를 시키는 프롬프트 모음.
 `[ ]` 부분만 바꿔 쓰면 된다.
 
 ---
@@ -11,26 +11,26 @@
 
 ### A-1. 연결 확인
 ```
-scienceon_status 도구로 연결 상태를 확인해줘.
+scienceON_status 도구로 연결 상태를 확인해줘.
 ```
 
 ### A-2. 탐색 검색 → 미리보기
 ```
-scienceon_search 로 ScienceOn에서 "[검색어]" 를 [ARTI/REPORT] 대상,
+scienceON_search 로 ScienceON에서 "[검색어]" 를 [ARTI/REPORT] 대상,
 [BI 전체/TI 제목/AB 초록] 필드, [2015]~[2024]년으로 [20]건 검색해서
 제목·저자·연도·초록요약 표로 보여줘.
 ```
 
 ### A-3. 적합성 판단 후 대량 수집·저장
 ```
-방금 결과가 연구주제 "[주제]"에 적합해 보이면, scienceon_export 로
+방금 결과가 연구주제 "[주제]"에 적합해 보이면, scienceON_export 로
 같은 조건에서 [300]건을 [xlsx, csv, json, sqlite]로 output/[프로젝트명]에 저장해줘.
 저장 후 건수와 파일 경로를 알려줘.
 ```
 
 ### A-4. 상세/초록 보강
 ```
-scienceon_detail 로 CN [제어번호]의 초록 전문과 서지정보를 가져와줘.
+scienceON_detail 로 CN [제어번호]의 초록 전문과 서지정보를 가져와줘.
 ```
 
 ---
@@ -38,7 +38,7 @@ scienceon_detail 로 CN [제어번호]의 초록 전문과 서지정보를 가�
 ## B. CLI 모드 (Claude가 설정 작성 + 터미널 실행)
 
 ```
-ScienceOn 수집기로 아래 조건의 자료를 수집해줘.
+ScienceON 수집기로 아래 조건의 자료를 수집해줘.
 - 주제/검색어: [검색어]
 - 대상: [ARTI 논문 / REPORT 보고서]
 - 필드: [BI 전체 / TI 제목 / AB 초록]

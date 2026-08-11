@@ -12,7 +12,7 @@ npx -y @anthropic-ai/mcpb pack mcpb dist/scienceon-mcp.mcpb
 빌드된 `.mcpb` 는 GitHub Release 에 첨부해 배포한다.
 
 ## 설치 (사용자)
-1. [Releases](https://github.com/rubatoyd/scienceon-mcp/releases) 에서 `scienceon-mcp.mcpb` 다운로드
+1. [Releases](https://github.com/rubatoyd/scienceON-mcp/releases) 에서 `scienceon-mcp.mcpb` 다운로드
 2. Claude Desktop 에 드래그(또는 더블클릭) → 설치 창에서 키 3종 입력 → 완료
 3. 전제: [uv](https://docs.astral.sh/uv/) 설치 (`winget install astral-sh.uv`)
 

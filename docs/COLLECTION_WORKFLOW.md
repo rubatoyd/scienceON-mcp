@@ -5,7 +5,7 @@
 
 ## 0. 전제 (최초 1회만)
 - `.env` 자격증명 설정 완료, 구독 티켓 확인(ARTI·REPORT·ATT·RESEARCHER·ORGAN).
-- 토큰 발급 검증 완료(`scienceon_status` 또는 `cli status`).
+- 토큰 발급 검증 완료(`scienceON_status` 또는 `cli status`).
 
 ## 1. 주제·범위 정의
 - 연구 질문 → 검색어(동의어·영문 포함), 대상 `target`(ARTI/REPORT), 연도 범위, 목표 건수.

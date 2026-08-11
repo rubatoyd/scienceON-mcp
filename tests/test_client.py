@@ -1,7 +1,7 @@
 """클라이언트 오류처리·후처리 필터 단위 테스트 (라이브 호출 없음)."""
 import pytest
 
-from scienceon_mcp.client import ScienceOnClient, ScienceOnError, _check_xml_error
+from scienceon_mcp.client import ScienceONClient, ScienceONError, _check_xml_error
 from scienceon_mcp.models import Record
 
 ERROR_XML = """<?xml version="1.0" encoding="UTF-8"?>
@@ -12,7 +12,7 @@ OK_XML = """<MetaData><resultSummary><statusCode>200</statusCode></resultSummary
 
 
 def test_check_xml_error_raises():
-    with pytest.raises(ScienceOnError) as e:
+    with pytest.raises(ScienceONError) as e:
         _check_xml_error(ERROR_XML)
     assert e.value.code == "E4103"
 
@@ -22,7 +22,7 @@ def test_check_xml_error_ok():
 
 
 def _client_without_init():
-    c = ScienceOnClient.__new__(ScienceOnClient)  # __init__(자격증명) 우회
+    c = ScienceONClient.__new__(ScienceONClient)  # __init__(자격증명) 우회
     c.throttle = 0
     return c
 

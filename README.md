@@ -1,12 +1,12 @@
 # scienceon-mcp
 
-[![CI](https://github.com/rubatoyd/scienceon-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/rubatoyd/scienceon-mcp/actions/workflows/ci.yml)
+[![CI](https://github.com/rubatoyd/scienceON-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/rubatoyd/scienceON-mcp/actions/workflows/ci.yml)
 
-KISTI **ScienceOn OpenAPI** 문헌 검색·메타데이터 수집기 — **MCP 서버 + CLI**.
-자기 ScienceOn API 키만 발급받으면 누구나 Claude(또는 CLI)에서 국내외 논문·보고서
+KISTI **ScienceON OpenAPI** 문헌 검색·메타데이터 수집기 — **MCP 서버 + CLI**.
+자기 ScienceON API 키만 발급받으면 누구나 Claude(또는 CLI)에서 국내외 논문·보고서
 서지 메타데이터를 검색·수집할 수 있습니다.
 
-> An MCP server + CLI for KISTI ScienceOn OpenAPI. Bring your own API key and let
+> An MCP server + CLI for KISTI ScienceON OpenAPI. Bring your own API key and let
 > Claude search & collect academic literature metadata in any project.
 
 ## 무엇을 할 수 있나
@@ -23,11 +23,11 @@ KISTI **ScienceOn OpenAPI** 문헌 검색·메타데이터 수집기 — **MCP �
 
 - Python 3.10+
 - [uv](https://docs.astral.sh/uv/) (패키지 관리)
-- ScienceOn API 자격증명 (아래 발급 방법)
+- ScienceON API 자격증명 (아래 발급 방법)
 
 ## 1) API 키 발급
 
-1. [ScienceOn](https://scienceon.kisti.re.kr) 회원가입·로그인
+1. [ScienceON](https://scienceon.kisti.re.kr) 회원가입·로그인
 2. **API Gateway → 인증키 발급 신청** → 승인 후 `인증키`·`Client ID` 발급
 3. **인증키관리**에서 신청 **MAC 주소** 등록, **IP관리**에서 호출 PC의 공인 IP 등록
 4. 사용할 **서비스 콘텐츠(티켓)** 체크 (논문/보고서 등)
@@ -37,7 +37,7 @@ KISTI **ScienceOn OpenAPI** 문헌 검색·메타데이터 수집기 — **MCP �
 **전제: [uv](https://docs.astral.sh/uv/) 설치** (Windows: `winget install astral-sh.uv`).
 
 ### 방법 0 — 원클릭 (.mcpb, Claude Desktop)
-[Releases](https://github.com/rubatoyd/scienceon-mcp/releases) 에서 **`scienceon-mcp.mcpb`** 다운로드 →
+[Releases](https://github.com/rubatoyd/scienceON-mcp/releases) 에서 **`scienceon-mcp.mcpb`** 다운로드 →
 Claude Desktop 에 더블클릭/드래그 → **설치 창에서 인증키·Client ID·MAC 입력** → 완료.
 
 ### 방법 A — uvx (설정 직접, 설치 불필요)
@@ -47,7 +47,7 @@ clone·venv 없이 아래 4)의 `uvx` 설정이 GitHub 버전을 자동 빌드·
 > venv를 폴더 밖에: `export UV_PROJECT_ENVIRONMENT="$HOME/.venvs/scienceon-mcp"` 후 `uv sync`.
 
 ## 3) 자격증명
-자기 ScienceOn 키(발급: 위 1)를 **MCP 설정 `env` 블록**(아래) 또는 `.env`(`.env.example` 복사)로 전달.
+자기 ScienceON 키(발급: 위 1)를 **MCP 설정 `env` 블록**(아래) 또는 `.env`(`.env.example` 복사)로 전달.
 코드/커밋/로그엔 넣지 마세요.
 
 ## 4) Claude에 MCP 연결 (설치 불필요 · uvx)
@@ -59,7 +59,7 @@ clone·venv 없이 아래 4)의 `uvx` 설정이 GitHub 버전을 자동 빌드·
   "mcpServers": {
     "scienceon": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/rubatoyd/scienceon-mcp", "scienceon-mcp"],
+      "args": ["--from", "git+https://github.com/rubatoyd/scienceON-mcp", "scienceon-mcp"],
       "env": {
         "SCIENCEON_AUTH_KEY": "발급_32자리_인증키",
         "SCIENCEON_CLIENT_ID": "발급_client_id",
@@ -73,15 +73,15 @@ clone·venv 없이 아래 4)의 `uvx` 설정이 GitHub 버전을 자동 빌드·
 **Claude Code**:
 
 ```bash
-claude mcp add scienceon -- uvx --from "git+https://github.com/rubatoyd/scienceon-mcp" scienceon-mcp
+claude mcp add scienceon -- uvx --from "git+https://github.com/rubatoyd/scienceON-mcp" scienceon-mcp
 ```
 
 > 첫 실행 시 빌드(수 초), 이후 캐시. 최신 반영은 `uvx --refresh ...`.
 > 개발용 로컬 설치를 쓰면 command 를 venv 파이썬으로:
 > `…\.venvs\scienceon-mcp\Scripts\python.exe -m scienceon_mcp.server`
 
-연결되면 Claude에서 `scienceon_search`, `scienceon_detail`, `scienceon_export`,
-`scienceon_status` 도구를 사용할 수 있습니다.
+연결되면 Claude에서 `scienceON_search`, `scienceON_detail`, `scienceON_export`,
+`scienceON_status` 도구를 사용할 수 있습니다.
 
 ## 5) CLI 사용 (배치·재현)
 
@@ -104,8 +104,8 @@ uv run scienceon collect --config config/search.example.yaml   # 설정 기반 �
 - `.env`, 토큰 캐시는 `.gitignore` 로 제외됩니다.
 
 ## 관련 프로젝트
-- [ansua79/scienceon-mcp](https://github.com/ansua79/scienceon-mcp) — KISTI 개발자의 ScienceOn MCP.
-  ScienceOn **전 API(논문·특허·보고서·동향·연구자·기관·기술트렌드·뉴스 등 17개 도구)** 를 대화형으로
+- [ansua79/scienceon-mcp](https://github.com/ansua79/scienceon-mcp) — KISTI 개발자의 ScienceON MCP.
+  ScienceON **전 API(논문·특허·보고서·동향·연구자·기관·기술트렌드·뉴스 등 17개 도구)** 를 대화형으로
   폭넓게 노출하고 GUI 설치기도 제공. **폭넓은 탐색**이 목적이면 이 도구를 권장합니다.
 
 > 본 프로젝트는 **연구용 자료수집·코퍼스 구축**에 특화되어 있습니다 — 다중쿼리 합집합 · 와일드카드 ·
@@ -115,4 +115,4 @@ uv run scienceon collect --config config/search.example.yaml   # 설정 기반 �
 ## 라이선스
 
 MIT © Yeondong Yang. 본 프로젝트는 KISTI의 비공식 클라이언트이며 KISTI와 제휴 관계가 없습니다.
-ScienceOn 데이터 이용은 KISTI 약관·트래픽 정책을 따릅니다.
+ScienceON 데이터 이용은 KISTI 약관·트래픽 정책을 따릅니다.

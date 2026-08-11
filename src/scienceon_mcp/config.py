@@ -23,7 +23,7 @@ API_URL = os.environ.get(
 
 @dataclass(frozen=True)
 class Credentials:
-    """ScienceOn API Gateway 발급 자격증명."""
+    """ScienceON API Gateway 발급 자격증명."""
 
     auth_key: str       # 32자리 — AES-256 암호화 키
     client_id: str      # 호출 식별자

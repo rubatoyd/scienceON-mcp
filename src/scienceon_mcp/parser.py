@@ -1,4 +1,4 @@
-"""ScienceOn 응답(XML) → 정규화 레코드.
+"""ScienceON 응답(XML) → 정규화 레코드.
 
 실제 태그/metaCode 명은 첫 라이브 응답으로 확정한다(docs §7). 그 전까지는
 원본 태그/속성을 그대로 수집하고, FIELD_CANDIDATES 로 정규화 필드에 매핑한다.

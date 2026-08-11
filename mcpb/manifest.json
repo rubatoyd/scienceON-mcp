@@ -1,12 +1,12 @@
 {
   "manifest_version": "0.3",
   "name": "scienceon-mcp",
-  "display_name": "ScienceOn 수집기 (scienceon-mcp)",
+  "display_name": "ScienceON 수집기 (scienceon-mcp)",
   "version": "0.1.0",
-  "description": "KISTI ScienceOn OpenAPI 문헌 검색·메타데이터 수집기 — 다중쿼리·와일드카드·후처리 필터·xlsx/csv/json/sqlite 대량 내보내기",
-  "author": { "name": "Yeondong Yang", "url": "https://github.com/rubatoyd/scienceon-mcp" },
-  "homepage": "https://github.com/rubatoyd/scienceon-mcp",
-  "documentation": "https://github.com/rubatoyd/scienceon-mcp#readme",
+  "description": "KISTI ScienceON OpenAPI 문헌 검색·메타데이터 수집기 — 다중쿼리·와일드카드·후처리 필터·xlsx/csv/json/sqlite 대량 내보내기",
+  "author": { "name": "Yeondong Yang", "url": "https://github.com/rubatoyd/scienceON-mcp" },
+  "homepage": "https://github.com/rubatoyd/scienceON-mcp",
+  "documentation": "https://github.com/rubatoyd/scienceON-mcp#readme",
   "license": "MIT",
   "keywords": ["scienceon", "kisti", "openapi", "academic", "literature", "metadata"],
   "server": {
@@ -14,7 +14,7 @@
     "entry_point": "uvx",
     "mcp_config": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/rubatoyd/scienceon-mcp", "scienceon-mcp"],
+      "args": ["--from", "git+https://github.com/rubatoyd/scienceON-mcp", "scienceon-mcp"],
       "env": {
         "SCIENCEON_AUTH_KEY": "${user_config.auth_key}",
         "SCIENCEON_CLIENT_ID": "${user_config.client_id}",
@@ -27,14 +27,14 @@
     "auth_key": {
       "type": "string",
       "title": "인증키 (32자)",
-      "description": "ScienceOn API Gateway 인증키",
+      "description": "ScienceON API Gateway 인증키",
       "sensitive": true,
       "required": true
     },
     "client_id": {
       "type": "string",
       "title": "Client ID",
-      "description": "ScienceOn API Gateway client_id",
+      "description": "ScienceON API Gateway client_id",
       "sensitive": true,
       "required": true
     },
@@ -53,10 +53,10 @@
     }
   },
   "tools": [
-    { "name": "scienceon_status", "description": "연결/토큰 상태 점검 (+공인 IP)" },
-    { "name": "scienceon_search", "description": "문헌 검색 — 다중쿼리·와일드카드·contains·lang·연도범위" },
-    { "name": "scienceon_detail", "description": "제어번호(CN)로 상세·초록 조회" },
-    { "name": "scienceon_export", "description": "대량 수집 후 xlsx/csv/json/sqlite 저장" }
+    { "name": "scienceON_status", "description": "연결/토큰 상태 점검 (+공인 IP)" },
+    { "name": "scienceON_search", "description": "문헌 검색 — 다중쿼리·와일드카드·contains·lang·연도범위" },
+    { "name": "scienceON_detail", "description": "제어번호(CN)로 상세·초록 조회" },
+    { "name": "scienceON_export", "description": "대량 수집 후 xlsx/csv/json/sqlite 저장" }
   ],
   "compatibility": {
     "platforms": ["win32", "darwin", "linux"],

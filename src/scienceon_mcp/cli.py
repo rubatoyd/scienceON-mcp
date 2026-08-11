@@ -1,4 +1,4 @@
-"""ScienceOn 수집기 CLI — status / search / detail / collect.
+"""ScienceON 수집기 CLI — status / search / detail / collect.
 
 예:
   scienceon status
@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from .client import ScienceOnClient, ScienceOnError
+from .client import ScienceONClient, ScienceONError
 
 
 def cmd_status(args) -> int:
@@ -34,10 +34,10 @@ def cmd_status(args) -> int:
 
 def cmd_search(args) -> int:
     try:
-        recs = ScienceOnClient().search_terms(
+        recs = ScienceONClient().search_terms(
             args.target, args.query, field=args.field, year=args.year,
             max_records=max(args.rows, 100), rows=min(args.rows, 100), contains=args.contains)
-    except ScienceOnError as e:
+    except ScienceONError as e:
         print("오류:", e)
         return 1
     for r in recs[:args.rows]:
@@ -48,8 +48,8 @@ def cmd_search(args) -> int:
 
 def cmd_detail(args) -> int:
     try:
-        r = ScienceOnClient().detail(args.target, args.cn)
-    except ScienceOnError as e:
+        r = ScienceONClient().detail(args.target, args.cn)
+    except ScienceONError as e:
         print("오류:", e)
         return 1
     if not r:
@@ -60,7 +60,7 @@ def cmd_detail(args) -> int:
     return 0
 
 
-def _collect_target(client: ScienceOnClient, target: str, cfg: dict, common: dict):
+def _collect_target(client: ScienceONClient, target: str, cfg: dict, common: dict):
     """단일 target 수집 — searches(다중그룹) 우선, 없으면 terms/query."""
     if cfg.get("searches"):
         return client.search_groups(target, cfg["searches"], **common)
@@ -80,7 +80,7 @@ def cmd_collect(args) -> int:
     sort = cfg.get("sort") or {}
     common = dict(year=year, max_records=int(cfg.get("max_records", 2000)),
                   rows=int(cfg.get("rows_per_page", 100)), sort_field=sort.get("field", ""))
-    client = ScienceOnClient(throttle=float(cfg.get("throttle_sec", 0.5)))
+    client = ScienceONClient(throttle=float(cfg.get("throttle_sec", 0.5)))
     targets = cfg.get("targets") or [cfg.get("target", "ARTI")]
     try:
         recs: list = []
@@ -92,7 +92,7 @@ def cmd_collect(args) -> int:
                     continue
                 seen.add(key)
                 recs.append(r)
-    except (ScienceOnError, ValueError) as e:
+    except (ScienceONError, ValueError) as e:
         print("오류:", e)
         return 1
     out = cfg.get("output", {})
@@ -108,7 +108,7 @@ def cmd_collect(args) -> int:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(prog="scienceon", description="ScienceOn 문헌 메타데이터 수집기")
+    p = argparse.ArgumentParser(prog="scienceon", description="ScienceON 문헌 메타데이터 수집기")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("status", help="연결/토큰 상태 점검").set_defaults(func=cmd_status)

@@ -1,4 +1,4 @@
-"""ScienceOn MCP 서버 (FastMCP).
+"""ScienceON MCP 서버 (FastMCP).
 
 Claude 등 MCP 클라이언트에 검색/상세/수집 도구를 노출한다.
 자격증명은 MCP 설정의 env 블록 또는 .env 에서 로드한다.
@@ -13,13 +13,13 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from .client import ScienceOnClient, ScienceOnError
+from .client import ScienceONClient, ScienceONError
 
-mcp = FastMCP("scienceon")
+mcp = FastMCP("scienceON")
 
 
-def _client() -> ScienceOnClient:
-    return ScienceOnClient()
+def _client() -> ScienceONClient:
+    return ScienceONClient()
 
 
 def _year_str(year_from: int | None, year_to: int | None) -> str | None:
@@ -37,8 +37,8 @@ def _terms(query: str | None, queries: list[str] | None) -> list[str]:
 
 
 @mcp.tool()
-def scienceon_status() -> dict:
-    """ScienceOn 연결/토큰 상태 점검. 실패 시 원인 힌트와 현재 공인 IP 를 반환."""
+def scienceON_status() -> dict:
+    """ScienceON 연결/토큰 상태 점검. 실패 시 원인 힌트와 현재 공인 IP 를 반환."""
     info: dict[str, Any] = {}
     try:
         import requests
@@ -56,12 +56,12 @@ def scienceon_status() -> dict:
 
 
 @mcp.tool()
-def scienceon_search(query: str | None = None, queries: list[str] | None = None,
+def scienceON_search(query: str | None = None, queries: list[str] | None = None,
                      target: str = "ARTI", field: str = "BI",
                      year_from: int | None = None, year_to: int | None = None,
                      rows: int = 20, contains: list[str] | None = None,
                      lang: list[str] | None = None) -> dict:
-    """ScienceOn 문헌 검색.
+    """ScienceON 문헌 검색.
 
     query: 단일 검색어 / queries: 여러 검색어(개별검색 후 CN 합집합) — 둘 중 하나
     target: ARTI(논문)·REPORT(보고서)·ATT(동향)·RESEARCHER·ORGAN
@@ -77,24 +77,24 @@ def scienceon_search(query: str | None = None, queries: list[str] | None = None,
         recs = _client().search_terms(target, terms, field=field, year=_year_str(year_from, year_to),
                                       max_records=min(rows, 100), rows=min(rows, 100),
                                       contains=contains, lang=lang)
-    except ScienceOnError as e:
+    except ScienceONError as e:
         return {"error": str(e)}
     recs = recs[:rows]
     return {"count": len(recs), "records": [r.to_row() for r in recs]}
 
 
 @mcp.tool()
-def scienceon_detail(control_no: str, target: str = "ARTI") -> dict:
+def scienceON_detail(control_no: str, target: str = "ARTI") -> dict:
     """제어번호(CN)로 상세 서지·초록 조회."""
     try:
         r = _client().detail(target, control_no)
-    except ScienceOnError as e:
+    except ScienceONError as e:
         return {"error": str(e)}
     return r.to_row() if r else {"error": "결과 없음"}
 
 
 @mcp.tool()
-def scienceon_export(query: str | None = None, queries: list[str] | None = None,
+def scienceON_export(query: str | None = None, queries: list[str] | None = None,
                      target: str = "ARTI", field: str = "BI",
                      year_from: int | None = None, year_to: int | None = None,
                      contains: list[str] | None = None, lang: list[str] | None = None,
@@ -112,7 +112,7 @@ def scienceon_export(query: str | None = None, queries: list[str] | None = None,
     try:
         recs = _client().search_terms(target, terms, field=field, year=_year_str(year_from, year_to),
                                       max_records=max_records, rows=100, contains=contains, lang=lang)
-    except ScienceOnError as e:
+    except ScienceONError as e:
         return {"error": str(e)}
     fmts = formats or ["xlsx", "csv", "json"]
     nm = (name or f"{target}_{terms[0]}").replace(" ", "_")[:60]
