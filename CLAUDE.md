@@ -74,8 +74,12 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
   전 단계 통과했다(win/macos/linux 바이너리 빌드 → 릴리스 → OIDC 발행).
   레지스트리 실조회: `io.github.rubatoyd/scienceon-mcp v0.2.0 status:active`.
   릴리스 자산 4종 — 경량 `scienceon-mcp.mcpb`(2KB) + 자체완결 linux 42MB·win 27MB·macos 25MB.
-  ⏭️ 자체완결 바이너리의 **런타임 기동 검증은 아직 안 했다**(빌드 성공 ≠ 실행 성공).
-     PyInstaller 는 hidden import 누락이 실행 시점에야 드러난다 — 특히 `Crypto`.
+  ✅ **자체완결 바이너리 런타임 검증 완료** — 릴리스 자산을 내려받아 **클린 환경**
+     (`env -i`, PATH=system32 만, Python·uv 없음)에서 stdio 핸드셰이크 성공(exit 0, 도구 4종).
+     `Crypto` 는 `auth.py` 모듈 최상단 import 라 기동 성공만으로 번들 확인된다.
+     `truststore` 는 지연 import 라 별도 확인 필요 → 자격증명 없이 `scienceON_status` 를 호출해
+     `ScienceONClient.__init__` → `use_os_trust()` 경로를 태웠고 stderr 에 주입 실패 경고가
+     없어 정상 번들 확인. 자격증명 누락은 크래시 없이 구조화된 오류로 반환됐다.
 - 🟡 **truststore 를 정식 의존성으로 이관** — 이전에는 MCP 등록 명령줄
   (`uv run --with truststore … inject_into_ssl()`)에만 걸려 있어 **`.mcpb` 번들 경로에는 아예
   들어가지 않았다.** 교육망·사내망 SSL 인터셉션 환경에서 `.mcpb` 설치본이 인증서 오류로 실패한다.
