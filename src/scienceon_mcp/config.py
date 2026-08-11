@@ -21,6 +21,39 @@ API_URL = os.environ.get(
 )
 
 
+_TRUST_INJECTED = False
+
+
+def use_os_trust() -> bool:
+    """OS 신뢰 저장소(Windows/macOS)로 TLS 검증을 위임.
+
+    교육망(학교/교육청)·사내망의 SSL 인터셉션은 자체서명 루트 CA를 OS 신뢰저장소에 심어둔다.
+    requests 는 기본적으로 certifi 만 보므로 그 CA를 모른다 → truststore 로 OS 저장소를 쓰게 하면
+    **검증을 끄지 않고도** 통과한다. `SCIENCEON_OS_TRUST=0` 이면 비활성. (한 번만 주입)
+
+    ⚠️ 이전에는 MCP 등록 명령줄(`uv run --with truststore … inject_into_ssl()`)에만 걸려 있어
+       `.mcpb` 번들 등 다른 기동 경로에는 적용되지 않았다. 정식 의존성으로 옮겨 모든 경로를 덮는다.
+    """
+    global _TRUST_INJECTED
+    if _TRUST_INJECTED:
+        return True
+    if (os.environ.get("SCIENCEON_OS_TRUST") or "1").strip() in ("0", "false", "no"):
+        return False
+    try:
+        import truststore
+
+        truststore.inject_into_ssl()
+        _TRUST_INJECTED = True
+        return True
+    except Exception as e:  # noqa: BLE001
+        import logging
+
+        logging.getLogger("scienceon_mcp").warning(
+            "truststore OS 신뢰저장소 주입 실패(%s) — TLS 인터셉션 망에서 인증서 오류 가능. "
+            "대안: REQUESTS_CA_BUNDLE 로 루트 CA 지정.", type(e).__name__)
+        return False
+
+
 @dataclass(frozen=True)
 class Credentials:
     """ScienceON API Gateway 발급 자격증명."""

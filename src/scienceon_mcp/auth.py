@@ -21,7 +21,7 @@ import requests
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 
-from .config import TOKEN_URL, Credentials
+from .config import TOKEN_URL, Credentials, use_os_trust
 
 _IV = b"jvHJ1EFA0IXBrxxz"  # 공식 샘플 고정 IV (16바이트)
 # 실행 cwd 와 무관하게 토큰을 재사용하도록 홈 디렉토리에 캐시 (MCP는 임의 cwd에서 기동)
@@ -60,6 +60,8 @@ class TokenManager:
     """Access Token 캐시·만료·자동 갱신 관리."""
 
     def __init__(self, creds: Credentials | None = None):
+        # 토큰 발급도 HTTPS 다 — 클라이언트 없이 단독 사용되는 경로까지 덮는다
+        use_os_trust()
         self.creds = creds or Credentials.from_env()
         self._tok: dict[str, Any] | None = None
         self._exp_epoch: float = 0.0

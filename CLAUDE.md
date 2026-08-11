@@ -61,7 +61,13 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 - ✅ pytest 11종 + GitHub Actions CI
 - ⏳ (선택) `.mcpb` 데스크톱 실설치 검증, ROADMAP(docs/ROADMAP.md) P0~P3
 
-### 2026-08-11 (2) — v0.2.0: 조용한 절단 제거 · 표기 통일
+### 2026-08-11 (2) — v0.2.0: 조용한 절단 제거 · 표기 통일 · truststore 정식화
+- 🟡 **truststore 를 정식 의존성으로 이관** — 이전에는 MCP 등록 명령줄
+  (`uv run --with truststore … inject_into_ssl()`)에만 걸려 있어 **`.mcpb` 번들 경로에는 아예
+  들어가지 않았다.** 교육망·사내망 SSL 인터셉션 환경에서 `.mcpb` 설치본이 인증서 오류로 실패한다.
+  `config.use_os_trust()` 신설(`SCIENCEON_OS_TRUST=0` 으로 비활성) + `ScienceONClient.__init__`·
+  `TokenManager.__init__` 에서 호출 → 모든 기동 경로를 덮는다. 검증을 끄지 않고 OS 저장소를 쓴다.
+  `.mcpb` manifest 에 `os_trust` user_config 추가. kci 와 동일 구조.
 - 🔴 **조용한 절단 제거(최우선)** — `client.search()` 가 `TotalCount` 를 파싱해 페이지네이션 종료
   조건에만 쓰고 **버렸다**. `scienceON_export` 는 `{count, files}` 만 반환해 `max_records`(기본 500)
   상한에 걸려도 알 방법이 없었다. **수집량이 max_records 와 정확히 일치하면 거의 항상 절단이다.**

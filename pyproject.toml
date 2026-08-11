@@ -28,6 +28,7 @@ dependencies = [
     "openpyxl>=3.1.0",
     "python-dotenv>=1.0.0",
     "pyyaml>=6.0",
+    "truststore>=0.9",  # 교육망/사내망 SSL 인터셉션 대응(OS 신뢰저장소 사용, 검증 유지)
 ]
 
 [project.scripts]

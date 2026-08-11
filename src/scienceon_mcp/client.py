@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 import requests
 
 from .auth import TokenManager
-from .config import API_URL, Credentials
+from .config import API_URL, Credentials, use_os_trust
 from .models import Record
 from .parser import normalize, parse_response
 
@@ -55,6 +55,7 @@ def _check_xml_error(text: str) -> None:
 class ScienceONClient:
     def __init__(self, creds: Credentials | None = None, *, throttle: float = 0.5,
                  timeout: int = 20, token_manager: TokenManager | None = None):
+        use_os_trust()  # 교육망/사내망 SSL 인터셉션 CA를 OS 저장소로 신뢰(검증 유지)
         self.creds = creds or Credentials.from_env()
         self.tokens = token_manager or TokenManager(self.creds)
         self.throttle = throttle
