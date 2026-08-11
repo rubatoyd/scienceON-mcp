@@ -1,4 +1,6 @@
-# scienceon-mcp
+# scienceON-mcp
+
+<!-- mcp-name: io.github.rubatoyd/scienceon-mcp -->
 
 [![CI](https://github.com/rubatoyd/scienceON-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/rubatoyd/scienceON-mcp/actions/workflows/ci.yml)
 

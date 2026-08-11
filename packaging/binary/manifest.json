@@ -1,0 +1,78 @@
+{
+  "manifest_version": "0.3",
+  "name": "scienceon-mcp",
+  "display_name": "ScienceON 수집기 (scienceON-mcp)",
+  "version": "0.2.0",
+  "description": "KISTI ScienceON OpenAPI 문헌 검색·메타데이터 수집기 — 다중쿼리·와일드카드·연도범위·언어 필터. 자체완결 바이너리(Python·uv 불필요).",
+  "author": { "name": "Yeondong Yang", "url": "https://github.com/rubatoyd/scienceON-mcp" },
+  "homepage": "https://github.com/rubatoyd/scienceON-mcp",
+  "documentation": "https://github.com/rubatoyd/scienceON-mcp#readme",
+  "license": "MIT",
+  "keywords": ["scienceon", "kisti", "openapi", "academic", "literature", "metadata"],
+  "server": {
+    "type": "binary",
+    "entry_point": "server/scienceon-mcp",
+    "mcp_config": {
+      "command": "${__dirname}/server/scienceon-mcp",
+      "args": [],
+      "env": {
+        "SCIENCEON_AUTH_KEY": "${user_config.auth_key}",
+        "SCIENCEON_CLIENT_ID": "${user_config.client_id}",
+        "SCIENCEON_MAC_ADDRESS": "${user_config.mac_address}",
+        "SCIENCEON_ACCOUNT_ID": "${user_config.account_id}",
+        "SCIENCEON_OS_TRUST": "${user_config.os_trust}"
+      },
+      "platform_overrides": {
+        "win32": {
+          "command": "${__dirname}/server/scienceon-mcp.exe"
+        }
+      }
+    }
+  },
+  "user_config": {
+    "auth_key": {
+      "type": "string",
+      "title": "인증키 (32자)",
+      "description": "ScienceON API Gateway 인증키",
+      "sensitive": true,
+      "required": true
+    },
+    "client_id": {
+      "type": "string",
+      "title": "Client ID",
+      "description": "ScienceON API Gateway client_id",
+      "sensitive": true,
+      "required": true
+    },
+    "mac_address": {
+      "type": "string",
+      "title": "신청 MAC 주소",
+      "description": "예: B0-A4-60-6D-EB-56 (IP관리에 등록한 대표 MAC)",
+      "required": true
+    },
+    "account_id": {
+      "type": "string",
+      "title": "신청자 아이디 (선택)",
+      "description": "참고용 계정 식별자",
+      "required": false,
+      "default": ""
+    },
+    "os_trust": {
+      "type": "string",
+      "title": "OS 신뢰저장소 TLS (교육망/사내망)",
+      "description": "교육망·사내망 SSL 인터셉션 환경이면 1(기본). 1=OS 신뢰저장소 사용, 0=비활성.",
+      "required": false,
+      "default": "1"
+    }
+  },
+  "tools": [
+    { "name": "scienceON_status", "description": "연결/토큰 상태 점검 (+공인 IP)" },
+    { "name": "scienceON_search", "description": "문헌 검색 — 다중쿼리·와일드카드·contains·lang·연도범위. total·truncated 동반 반환" },
+    { "name": "scienceON_detail", "description": "제어번호(CN)로 상세·초록 조회" },
+    { "name": "scienceON_export", "description": "대량 수집 후 xlsx/csv/json/sqlite 저장. meta(축별 total·truncated) 동반 — 상한 절단 시 경고" }
+  ],
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["win32", "darwin", "linux"]
+  }
+}

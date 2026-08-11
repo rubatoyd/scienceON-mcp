@@ -61,7 +61,16 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 - ✅ pytest 11종 + GitHub Actions CI
 - ⏳ (선택) `.mcpb` 데스크톱 실설치 검증, ROADMAP(docs/ROADMAP.md) P0~P3
 
-### 2026-08-11 (2) — v0.2.0: 조용한 절단 제거 · 표기 통일 · truststore 정식화
+### 2026-08-11 (2) — v0.2.0: 조용한 절단 제거 · 표기 통일 · truststore 정식화 · 릴리스 파이프라인
+- 🟢 **릴리스 파이프라인 신설(kci 이식)** — 기존에는 CI 가 테스트만 돌리고 릴리스·레지스트리
+  경로가 아예 없었다. `.github/workflows/publish-mcp.yml`(태그 푸시 → OS별 PyInstaller 바이너리
+  빌드 → 경량 `.mcpb` 팩 → sha256 주입 → GitHub Release → 레지스트리 OIDC 발행),
+  `packaging/binary/{entry.py,manifest.json}`, `server.json`, README `mcp-name` 주석 추가.
+  두 manifest 는 `mcpb validate` 공식 스키마 검증 통과.
+  ⚠️ 레지스트리 이름은 **소문자** `io.github.rubatoyd/scienceon-mcp` — 저장소명(`scienceON-mcp`)과
+  다르다. 배포명(`scienceon-mcp`)에 맞췄고 레지스트리 이름 대소문자 취급이 불확실하기 때문이다.
+  ⚠️ pycryptodome 은 import 명이 `Crypto` 라 PyInstaller `--collect-all Crypto` 가 필요하다(kci 엔 없는 항목).
+  ⏭️ **아직 태그를 푸시하지 않았다** — 발행은 공개 행위이므로 별도 확인 후 진행.
 - 🟡 **truststore 를 정식 의존성으로 이관** — 이전에는 MCP 등록 명령줄
   (`uv run --with truststore … inject_into_ssl()`)에만 걸려 있어 **`.mcpb` 번들 경로에는 아예
   들어가지 않았다.** 교육망·사내망 SSL 인터셉션 환경에서 `.mcpb` 설치본이 인증서 오류로 실패한다.
@@ -95,3 +104,8 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
   를 가리켜 `uv lock`·`uv run` 이 exit 103 으로 실패한다(OneDrive 로 유입된 타 PC 산출물, kci 도 동일 증상).
   우회: `UV_PROJECT_ENVIRONMENT=C:/Users/user/.venvs/scienceon-mcp` (이번에 생성, 클라우드 폴더 밖).
 - ℹ️ `uv lock` 이 lockfile `revision 2 → 3` 을 올린다(uv 0.10 형식). 내용 변경은 mcp specifier 한 줄뿐.
+- ℹ️ **기동 시 stderr 경고는 무해하다(오진 주의)** — `pydantic_settings … IncompleteFieldDefinitionWarning:
+  Field 'lifespan' has an incomplete definition`. pydantic-settings 2.14 에서 새로 생긴 경고이고 대상은
+  mcp SDK 의 FastMCP `Settings` 모델이다(우리 코드 아님). `pydantic-settings<2.14` 면 사라지는 것을
+  실측했으나 **핀하지 않는다** — 직접 쓰지 않는 전이 의존성을 묶으면 상류 수정 후에도 부채로 남는다.
+  MCP 로그에서 이 두 줄은 무시하고 실제 오류만 볼 것. kci 와 동일 증상.

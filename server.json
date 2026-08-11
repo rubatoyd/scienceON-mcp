@@ -1,0 +1,57 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.rubatoyd/scienceon-mcp",
+  "description": "KISTI ScienceON OpenAPI literature search & metadata collection (MCP server + CLI)",
+  "version": "0.2.0",
+  "repository": {
+    "url": "https://github.com/rubatoyd/scienceON-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/rubatoyd/scienceON-mcp",
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/rubatoyd/scienceON-mcp/releases/download/v0.2.0/scienceon-mcp.mcpb",
+      "version": "0.2.0",
+      "transport": { "type": "stdio" },
+      "fileSha256": "__MCPB_SHA256__",
+      "environmentVariables": [
+        {
+          "name": "SCIENCEON_AUTH_KEY",
+          "description": "ScienceON API Gateway 인증키(32자). apigateway.kisti.re.kr 에서 발급.",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "SCIENCEON_CLIENT_ID",
+          "description": "ScienceON API Gateway client_id.",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "SCIENCEON_MAC_ADDRESS",
+          "description": "API Gateway IP관리에 등록한 대표 MAC 주소 (예: B0-A4-60-6D-EB-56).",
+          "isRequired": true,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "SCIENCEON_ACCOUNT_ID",
+          "description": "신청자 계정 식별자(참고용, 선택).",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "SCIENCEON_OS_TRUST",
+          "description": "교육망·사내망 SSL 인터셉션 대응. 1(기본)=OS 신뢰저장소 사용, 0=비활성.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}
