@@ -20,6 +20,9 @@ build/
 dist/
 .pytest_cache/
 
+# Claude Code 로컬 설정
+.claude/settings.local.json
+
 # 도구 산출물
 .playwright-mcp/
 
