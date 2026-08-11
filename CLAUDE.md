@@ -113,6 +113,11 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
   를 가리켜 `uv lock`·`uv run` 이 exit 103 으로 실패한다(OneDrive 로 유입된 타 PC 산출물, kci 도 동일 증상).
   우회: `UV_PROJECT_ENVIRONMENT=C:/Users/user/.venvs/scienceon-mcp` (이번에 생성, 클라우드 폴더 밖).
 - ℹ️ `uv lock` 이 lockfile `revision 2 → 3` 을 올린다(uv 0.10 형식). 내용 변경은 mcp specifier 한 줄뿐.
+- ⚠️ **액션 버전 표기: 이동 태그 유무를 구분할 것 (2026-08-11 CI 실패로 학습)** — Node.js 20
+  deprecation 해소를 위한 상향 중, `astral-sh/setup-uv` 는 **v7 이후 이동 메이저 태그를 내지 않아**
+  (`v5`·`v6`·`v7` 존재, `v8`·`v9` 없음) `@v9` 가 `Unable to resolve action … unable to find
+  version v9` 로 즉시 실패했다 → `@v9.0.0` 정확 고정. `actions/*` 는 이동 태그를 유지한다.
+  상향 전 `gh api repos/<owner>/<repo>/git/ref/tags/<tag>` 로 실존 확인할 것. kci 와 동일 기록.
 - ℹ️ **기동 시 stderr 경고는 무해하다(오진 주의)** — `pydantic_settings … IncompleteFieldDefinitionWarning:
   Field 'lifespan' has an incomplete definition`. pydantic-settings 2.14 에서 새로 생긴 경고이고 대상은
   mcp SDK 의 FastMCP `Settings` 모델이다(우리 코드 아님). `pydantic-settings<2.14` 면 사라지는 것을
