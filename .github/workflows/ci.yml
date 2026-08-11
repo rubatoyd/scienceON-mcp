@@ -11,7 +11,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install uv
-        uses: astral-sh/setup-uv@v9
+        # ⚠️ 정확한 버전 고정 — astral-sh/setup-uv 는 v7 이후 **이동 메이저 태그를 내지 않는다**
+        #    (v5·v6·v7 은 있으나 v8·v9 는 없음). `@v9` 로 쓰면 기동 자체가 실패한다:
+        #    "Unable to resolve action astral-sh/setup-uv@v9, unable to find version v9".
+        #    actions/* 는 이동 태그를 유지하므로 메이저만 써도 된다.
+        uses: astral-sh/setup-uv@v9.0.0
       - name: Sync (dev)
         run: uv sync
       - name: Run tests
