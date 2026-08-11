@@ -69,18 +69,27 @@ def scienceON_search(query: str | None = None, queries: list[str] | None = None,
     year_from~year_to: 발행연도(범위는 PY 틸드). rows: 반환 건수(최대 100).
     contains: 원본 전체필드에 이 문자열(들) 포함 결과만(대소문자 무시 후처리 필터).
     lang: 허용 언어(예: ["한국어"]) — 국내(국문) 한정 등.
+
+    반환값의 total 은 ScienceON 이 보고한 전체 건수(축별 합, 합집합 상한)이고,
+    truncated=true 면 rows 상한에 잘린 것이다. 이때 warning 이 함께 붙는다.
+    ⚠️ 절단된 결과를 완전한 코퍼스로 오인하면 후속 분석이 무효가 된다.
     """
     terms = _terms(query, queries)
     if not terms:
         return {"error": "query 또는 queries 중 하나는 필요합니다."}
     try:
-        recs = _client().search_terms(target, terms, field=field, year=_year_str(year_from, year_to),
-                                      max_records=min(rows, 100), rows=min(rows, 100),
-                                      contains=contains, lang=lang)
+        recs, meta = _client().search_terms_meta(
+            target, terms, field=field, year=_year_str(year_from, year_to),
+            max_records=min(rows, 100), rows=min(rows, 100),
+            contains=contains, lang=lang)
     except ScienceONError as e:
         return {"error": str(e)}
     recs = recs[:rows]
-    return {"count": len(recs), "records": [r.to_row() for r in recs]}
+    out = {"count": len(recs), "total": meta["union_upper_bound"],
+           "truncated": meta["truncated"], "records": [r.to_row() for r in recs]}
+    if meta.get("warning"):
+        out["warning"] = meta["warning"]
+    return out
 
 
 @mcp.tool()
@@ -104,21 +113,33 @@ def scienceON_export(query: str | None = None, queries: list[str] | None = None,
 
     queries=[...] 여러 용어 개별검색 후 CN 합집합. contains=[...] 후처리 필터, lang=["한국어"] 국내한정.
     out_dir 미지정 시 사용자 홈의 `scienceon-output/` 에 저장(MCP는 임의 cwd에서 기동).
+
+    ⚠️ **max_records(기본 500)는 조용히 자르지 않는다** — 상한에 걸리면 meta.truncated=true 와
+    warning 이 붙는다. meta.union_upper_bound 는 실행한 검색축들의 total 합(합집합 상한)이므로,
+    절단됐다면 max_records 를 그 위로 올려 재수집해야 코퍼스가 완결된다.
+    수집량이 max_records 와 정확히 일치하면 거의 항상 절단이다.
     """
     from .exporters import export
     terms = _terms(query, queries)
     if not terms:
         return {"error": "query 또는 queries 중 하나는 필요합니다."}
     try:
-        recs = _client().search_terms(target, terms, field=field, year=_year_str(year_from, year_to),
-                                      max_records=max_records, rows=100, contains=contains, lang=lang)
+        recs, meta = _client().search_terms_meta(
+            target, terms, field=field, year=_year_str(year_from, year_to),
+            max_records=max_records, rows=100, contains=contains, lang=lang)
     except ScienceONError as e:
         return {"error": str(e)}
     fmts = formats or ["xlsx", "csv", "json"]
     nm = (name or f"{target}_{terms[0]}").replace(" ", "_")[:60]
     base = out_dir or str(Path.home() / "scienceon-output")
     paths = export(recs, fmts, base, nm)
-    return {"count": len(recs), "files": paths}
+    out = {"count": len(recs), "files": paths,
+           "meta": {k: meta[k] for k in ("axes", "axes_planned", "axes_run", "union",
+                                         "union_upper_bound", "max_records", "truncated",
+                                         "returned") if k in meta}}
+    if meta.get("warning"):
+        out["warning"] = meta["warning"]
+    return out
 
 
 def main() -> None:

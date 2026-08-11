@@ -61,7 +61,21 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 - ✅ pytest 11종 + GitHub Actions CI
 - ⏳ (선택) `.mcpb` 데스크톱 실설치 검증, ROADMAP(docs/ROADMAP.md) P0~P3
 
-### 2026-08-11 — 기동 불능 2건 수정 (자매 프로젝트 kci-openapi-mcp 점검 중 발견)
+### 2026-08-11 (2) — v0.2.0: 조용한 절단 제거 · 표기 통일
+- 🔴 **조용한 절단 제거(최우선)** — `client.search()` 가 `TotalCount` 를 파싱해 페이지네이션 종료
+  조건에만 쓰고 **버렸다**. `scienceON_export` 는 `{count, files}` 만 반환해 `max_records`(기본 500)
+  상한에 걸려도 알 방법이 없었다. **수집량이 max_records 와 정확히 일치하면 거의 항상 절단이다.**
+  `search_meta`/`search_terms_meta`/`search_groups_meta` 신설 → `total`·`fetched`·`truncated`·
+  `axes`·`union_upper_bound` 반환. 도구 응답과 `cli collect` 출력에 경고를 노출한다.
+  기존 `search`/`search_terms`/`search_groups` 는 얇은 래퍼로 남겨 호출부 호환 유지.
+  회귀 테스트 5건 추가(11 → 16 통과). kci v0.1.3 과 동일 처방.
+- **표기 통일 `ScienceOn` → `ScienceON`** — 저장소에 공식 표기가 하나도 없었다. 저장소도
+  `rubatoyd/scienceON-mcp` 로 rename. GitHub 는 owner/repo 조회가 **대소문자 무시**라 구 URL 이
+  계속 해석되므로 계정명 변경 때와 달리 기동 장애는 없다.
+  MCP 서버 키·도구명도 `scienceON`/`scienceON_*` 로 변경(**호출부 호환 깨짐** → v0.2.0).
+  보존: 모듈 `scienceon_mcp`(PEP 8), 배포·스크립트명 `scienceon-mcp`, 환경변수 `SCIENCEON_*`.
+
+### 2026-08-11 (1) — 기동 불능 2건 수정 (자매 프로젝트 kci-openapi-mcp 점검 중 발견)
 - 🔴 **`mcp` SDK 상한 누락으로 서버가 아예 기동 못 하고 있었다** — `mcp>=1.2.0`(상한 없음)이
   **mcp 2.0** 으로 해석되는데 2.0 은 `mcp.server.fastmcp` 를 제거했다(→ `mcp.server.MCPServer` 체계).
   `uv run --with "scienceon-mcp @ git+…"` 경로는 **uv.lock 을 보지 않고 매번 새로 해석**하므로

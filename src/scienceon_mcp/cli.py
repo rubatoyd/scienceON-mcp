@@ -61,14 +61,14 @@ def cmd_detail(args) -> int:
 
 
 def _collect_target(client: ScienceONClient, target: str, cfg: dict, common: dict):
-    """단일 target 수집 — searches(다중그룹) 우선, 없으면 terms/query."""
+    """단일 target 수집 — searches(다중그룹) 우선, 없으면 terms/query. (records, meta) 반환."""
     if cfg.get("searches"):
-        return client.search_groups(target, cfg["searches"], **common)
+        return client.search_groups_meta(target, cfg["searches"], **common)
     terms = cfg.get("terms") or ([cfg["query"]] if cfg.get("query") else [])
     if not terms:
         raise ValueError("config 에 searches / terms / query 중 하나가 필요합니다.")
-    return client.search_terms(target, terms, field=cfg.get("field", "BI"),
-                               contains=cfg.get("contains"), **common)
+    return client.search_terms_meta(target, terms, field=cfg.get("field", "BI"),
+                                    contains=cfg.get("contains"), **common)
 
 
 def cmd_collect(args) -> int:
@@ -85,8 +85,11 @@ def cmd_collect(args) -> int:
     try:
         recs: list = []
         seen: set = set()
+        metas: list[tuple[str, dict]] = []
         for tgt in targets:  # 다중 target(예: ARTI+REPORT) → CN 합집합
-            for r in _collect_target(client, tgt, cfg, common):
+            got, meta = _collect_target(client, tgt, cfg, common)
+            metas.append((tgt, meta))
+            for r in got:
                 key = r.control_no or (r.title, r.pub_year)
                 if key in seen:
                     continue
@@ -104,6 +107,13 @@ def cmd_collect(args) -> int:
     print(f"수집 {len(recs)}건 (target {','.join(targets)} → {dict(bysrc)}) 저장:")
     for p in paths:
         print("  -", p)
+    # 조용한 절단 방지 — 상한에 걸린 코퍼스를 완전한 것으로 오인하면 후속 분석이 무효가 된다
+    for tgt, meta in metas:
+        if meta.get("truncated"):
+            print(f"\n⚠️ [{tgt}] {meta.get('warning', '절단됨')}")
+        else:
+            print(f"   [{tgt}] 전수 수집 (상한 {meta.get('max_records')}건 미도달, "
+                  f"total 합 {meta.get('union_upper_bound')}건)")
     return 0
 
 
