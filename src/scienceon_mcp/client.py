@@ -65,15 +65,29 @@ class ScienceONClient:
         base = {"client_id": self.creds.client_id,
                 "token": self.tokens.get_access_token(), "version": "1.0"}
         base.update(params)
+        r = None
         for attempt in range(3):
-            r = requests.get(API_URL, params=base, timeout=self.timeout)
+            try:
+                r = requests.get(API_URL, params=base, timeout=self.timeout)
+            except requests.exceptions.RequestException as e:
+                # ⚠️ 예외 객체를 그대로 올리면 안 된다 — requests 예외 메시지에는 **요청 URL 전체**가
+                #    담기고, 이 URL 의 쿼리에는 client_id 와 access token 이 들어 있다.
+                #    도구의 _safe 가 그 메시지를 응답에 실으면 자격증명이 LLM 트랜스크립트로 흘러간다.
+                if attempt < 2:
+                    time.sleep(1.5 * (2 ** attempt))
+                    continue
+                raise ScienceONError("NETWORK", f"네트워크 오류({type(e).__name__}) — 연결/SSL 확인 후 재시도.") from None
             if r.status_code in (429, 500, 502, 503, 504) and attempt < 2:
                 time.sleep(1.5 * (2 ** attempt))  # 지수 백오프
                 continue
             break
+        if r is None:  # pragma: no cover
+            raise ScienceONError("NETWORK", "요청 실패.")
         if r.status_code == 429:
             raise ScienceONError("429", "요청 한도 초과(Too Many Requests). throttle 상향 또는 잠시 후 재시도.")
-        r.raise_for_status()
+        if r.status_code >= 400:
+            # ⚠️ raise_for_status() 금지 — 메시지에 token·client_id 가 든 URL 이 그대로 들어간다.
+            raise ScienceONError(str(r.status_code), "ScienceON 서버 응답 오류.")
         _check_xml_error(r.text)
         return r.text
 
@@ -95,10 +109,12 @@ class ScienceONClient:
                     retry_incomplete: int = 1) -> tuple[list[Record], dict]:
         """search() + 회수 메타 — 조용한 절단 방지.
 
-        meta = {target, query, total, fetched, truncated}
-          total    : ScienceON 이 보고한 전체 건수(`TotalCount`)
-          fetched  : 실제 회수·중복제거 후 반환 건수
-          truncated: fetched < total (= max_records 상한에 걸려 잘렸다는 뜻)
+        meta = {target, query, total, fetched, truncated, total_mismatch, sweeps}
+          total         : ScienceON 이 보고한 전체 건수(`TotalCount`)
+          fetched       : 실제 회수·중복제거 후 반환 건수
+          truncated     : **우리 상한(max_records)에 걸렸다** — 올리면 늘어난다
+          total_mismatch: 끝까지 페이징했는데 total 에 못 미쳤다 — 올려도 늘지 않는다
+          sweeps        : 1보다 크면 불완전 회수를 재스윕으로 보정한 것
         절단 여부를 호출자에게 **반드시** 노출한다 — 상한에 걸린 결과를 완전한 코퍼스로
         오인하면 계량서지·텍스트마이닝 분석 전체가 무효가 된다.
         """
@@ -165,7 +181,9 @@ class ScienceONClient:
         #    떴다(실측: TI '경계선지능' total 263 / 실회수 262, 중복제거 0건).
         #    API 의 total 은 **실제 서빙량보다 클 수 있다**. 그때 "max_records 를 올리라"는 조언은
         #    틀린 처방이며 사용자를 무한 재수집으로 몬다.
-        hit_cap = len(out) >= max_records
+        # 상한에 닿았더라도 total 을 다 채웠으면 잘린 것이 없다 — 그때 truncated 를 붙이면
+        # 전수 수집한 결과에 경고가 달려 무의미한 재수집을 유도한다.
+        hit_cap = len(out) >= max_records and (not total or len(out) < total)
         return out, {"target": target, "query": query, "total": total, "fetched": len(out),
                      "truncated": hit_cap,          # 우리 상한에 걸림 → 올리면 해결된다
                      "sweeps": sweeps,              # 1보다 크면 불완전 회수를 보정한 것
@@ -179,7 +197,8 @@ class ScienceONClient:
 
     def search_terms_meta(self, target: str, terms, *, field: str = "BI", year: str | None = None,
                           max_records: int = 3000, rows: int = 100, sort_field: str = "",
-                          include: str = "", contains=None, lang=None) -> tuple[list[Record], dict]:
+                          include: str = "", contains=None, lang=None,
+                          retry_incomplete: int = 1) -> tuple[list[Record], dict]:
         """여러 검색어를 **각각 개별 검색**해 CN 기준 합집합(중복제거) + 회수 메타.
 
         (서버측 파이프 OR 은 공백 포함 용어에서 토큰이 분리돼 과대매칭되므로 사용하지 않는다.)
@@ -202,7 +221,8 @@ class ScienceONClient:
             if year:
                 q["PY"] = year
             recs, m = self.search_meta(target, q, max_records=max_records, rows=rows,
-                                       sort_field=sort_field, include=include)
+                                       sort_field=sort_field, include=include,
+                                       retry_incomplete=retry_incomplete)
             new = 0
             for r in recs:
                 key = r.control_no or (r.title, r.pub_year)
@@ -213,7 +233,10 @@ class ScienceONClient:
                 new += 1
             axes.append({**m, "term": term, "field": field, "new": new})
             if len(out) >= max_records:
-                stopped_early = True
+                # ⚠️ **마지막 축이면 남은 축이 없으므로 '조기 중단'이 아니다.**
+                #    그대로 True 로 두면 전수 수집한 코퍼스에 truncated 가 붙어, 사용자가
+                #    max_records 를 올려 무의미한 재수집을 반복하게 된다.
+                stopped_early = term is not terms[-1]
                 break
         out = out[:max_records]
         planned = len(terms)
@@ -274,7 +297,8 @@ class ScienceONClient:
 
     def search_groups_meta(self, target: str, groups, *, year: str | None = None,
                            max_records: int = 3000, rows: int = 100,
-                           sort_field: str = "") -> tuple[list[Record], dict]:
+                           sort_field: str = "",
+                           retry_incomplete: int = 1) -> tuple[list[Record], dict]:
         """여러 검색 그룹을 합집합(CN 중복제거) + 회수 메타.
 
         각 group = {field, terms:[...], contains:[...]} — 그룹별로 다른 필드·후처리 필터 적용.
@@ -293,7 +317,8 @@ class ScienceONClient:
             recs, gm = self.search_terms_meta(
                 target, terms, field=g.get("field", "BI"), year=year,
                 max_records=int(g.get("max", max_records)), rows=rows,
-                sort_field=sort_field, contains=g.get("contains"), lang=g.get("lang"))
+                sort_field=sort_field, contains=g.get("contains"), lang=g.get("lang"),
+                retry_incomplete=retry_incomplete)
             new = 0
             for r in recs:
                 key = r.control_no or (r.title, r.pub_year)
@@ -307,7 +332,7 @@ class ScienceONClient:
                            "returned": gm["returned"], "truncated": gm["truncated"],
                            "total_mismatch": gm.get("total_mismatch", False), "new": new})
             if len(out) >= max_records:
-                stopped_early = True
+                stopped_early = g is not groups[-1]   # 마지막 그룹이면 조기 중단이 아니다
                 break
         out = out[:max_records]
         meta = {

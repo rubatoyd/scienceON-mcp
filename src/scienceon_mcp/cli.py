@@ -111,6 +111,9 @@ def cmd_collect(args) -> int:
     for tgt, meta in metas:
         if meta.get("truncated"):
             print(f"\n⚠️ [{tgt}] {meta.get('warning', '절단됨')}")
+        elif meta.get("total_mismatch"):
+            # 끝까지 돌았지만 total 에 못 미친 경우 — 여기서 "전수 수집"이라고 하면 오보다
+            print(f"\nℹ️ [{tgt}] {meta.get('notice', 'total 과 회수량이 다릅니다')}")
         else:
             print(f"   [{tgt}] 전수 수집 (상한 {meta.get('max_records')}건 미도달, "
                   f"total 합 {meta.get('union_upper_bound')}건)")

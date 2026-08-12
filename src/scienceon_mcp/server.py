@@ -88,7 +88,7 @@ def scienceON_search(query: str | None = None, queries: list[str] | None = None,
                      target: str = "ARTI", field: str = "BI",
                      year_from: int | None = None, year_to: int | None = None,
                      rows: int = 20, contains: list[str] | None = None,
-                     lang: list[str] | None = None) -> dict:
+                     lang: list[str] | None = None, retry_incomplete: int = 1) -> dict:
     """ScienceON 문헌 검색.
 
     query: 단일 검색어 / queries: 여러 검색어(개별검색 후 CN 합집합) — 둘 중 하나
@@ -109,7 +109,8 @@ def scienceON_search(query: str | None = None, queries: list[str] | None = None,
         eff = max(1, min(rows, 100))   # ⚠️ 하한 1 — rowCount=0 이면 total 까지 0 으로 와 오보된다
         recs, meta = _client().search_terms_meta(
             target, terms, field=field, year=_year_str(year_from, year_to),
-            max_records=eff, rows=eff, contains=contains, lang=lang)
+            max_records=eff, rows=eff, contains=contains, lang=lang,
+            retry_incomplete=retry_incomplete)
     except ScienceONError as e:
         return {"error": str(e)}
     recs = recs[:rows] if rows > 0 else []
@@ -140,6 +141,7 @@ def scienceON_export(query: str | None = None, queries: list[str] | None = None,
                      year_from: int | None = None, year_to: int | None = None,
                      contains: list[str] | None = None, lang: list[str] | None = None,
                      formats: list[str] | None = None, max_records: int = 500,
+                     retry_incomplete: int = 1,
                      out_dir: str | None = None, name: str | None = None) -> dict:
     """검색 결과를 대량 수집해 파일로 저장(xlsx/csv/json/sqlite). 저장 경로 반환.
 
@@ -158,7 +160,8 @@ def scienceON_export(query: str | None = None, queries: list[str] | None = None,
     try:
         recs, meta = _client().search_terms_meta(
             target, terms, field=field, year=_year_str(year_from, year_to),
-            max_records=max_records, rows=100, contains=contains, lang=lang)
+            max_records=max_records, rows=100, contains=contains, lang=lang,
+            retry_incomplete=retry_incomplete)
     except ScienceONError as e:
         return {"error": str(e)}
     fmts = formats or ["xlsx", "csv", "json"]
@@ -181,6 +184,7 @@ def scienceON_export(query: str | None = None, queries: list[str] | None = None,
 def scienceON_collect_groups(groups: list[dict], target: str = "ARTI",
                              year_from: int | None = None, year_to: int | None = None,
                              max_records: int = 3000, save: bool = True,
+                             retry_incomplete: int = 1,
                              formats: list[str] | None = None,
                              out_dir: str | None = None, name: str | None = None) -> dict:
     """여러 **검색 그룹**을 한 코퍼스로 합쳐 수집(CN 중복제거). config 파일 없이 대화형으로.
@@ -207,14 +211,19 @@ def scienceON_collect_groups(groups: list[dict], target: str = "ARTI",
         return {"error": "groups 는 최소 1개 필요합니다. 예: [{\"field\":\"BI\",\"terms\":[\"경계선지능\"]}]"}
     try:
         recs, meta = _client().search_groups_meta(
-            target, groups, year=_year_str(year_from, year_to), max_records=max_records)
+            target, groups, year=_year_str(year_from, year_to), max_records=max_records,
+            retry_incomplete=retry_incomplete)
     except ScienceONError as e:
         return {"error": str(e)}
     out: dict[str, Any] = {"count": len(recs), "meta": meta}
     if save:
         from .exporters import export
         fmts = formats or ["xlsx", "csv", "json"]
-        nm = (name or f"{target}_groups").replace(" ", "_")[:60]
+        # ⚠️ 기본 파일명에 그룹 내용을 반영한다. `{target}_groups` 로 고정하면 같은 세션에서
+        #    다른 그룹 조합을 부를 때 두 번째가 첫 산출물을 **조용히 덮어쓴다**.
+        first = next((t for g in groups for t in (g.get("terms") or [g.get("term") or ""]) if t), "")
+        nm = (name or f"{target}_groups_{first}" if first else name or f"{target}_groups")
+        nm = nm.replace(" ", "_")[:60]
         base = out_dir or str(Path.home() / "scienceon-output")
         out["files"] = export(recs, fmts, base, nm)
     else:

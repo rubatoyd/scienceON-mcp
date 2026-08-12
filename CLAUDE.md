@@ -61,6 +61,30 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 - ✅ pytest 11종 + GitHub Actions CI
 - ⏳ (선택) `.mcpb` 데스크톱 실설치 검증, ROADMAP(docs/ROADMAP.md) P0~P3
 
+### 2026-08-11 (6) — 코드 리뷰 지적 7종 반영
+`/code-review ultra` 를 리뷰 전용 PR#1 에 돌려 나온 지적. **최우선은 자격증명 유출이었다.**
+- 🔴 **자격증명이 MCP 응답으로 새어나갔다** — `r.raise_for_status()` 는 예외 메시지에 **요청 URL
+  전체**를 넣고, 그 쿼리에는 `client_id`·access token 이 들어 있다. `_safe` 가 그 메시지를
+  `{"error": …}` 로 실어 **LLM 트랜스크립트까지 흘러갔다.** 토큰 엔드포인트는 더 나빠서
+  `accounts`(AES 페이로드)·`refreshToken` 까지 URL 에 있다. 오프라인 재현으로 실증했다.
+  → `client._call` 과 `auth._get_json` 에서 `raise_for_status()` 를 없애고 상태코드·예외 타입만
+  보고한다. `requests` 예외도 잡아 URL 없이 재래핑.
+  ⚠️ **kci 는 이 위험을 알고 처음부터 `raise_for_status()` 를 피했다**(주석까지 있음).
+  같은 구조인데 이쪽만 뚫려 있었다 — 자매 프로젝트 비대칭의 여섯 번째 사례이자 유일한 보안 건.
+- 🟡 **마지막 축/그룹이 상한을 채우면 `stopped_early` 오탐** — 남은 축이 없는데 조기 중단으로
+  표시돼, 전수 수집한 코퍼스에 절단 경고가 붙었다. `term is not terms[-1]` 로 판정.
+- 🟡 **`retry_incomplete` 가 문서에만 있고 도달 불가** — `search_terms_meta`/`search_groups_meta`
+  를 거쳐 도구 3종·CLI 까지 통과시켰다.
+- 🟡 `search_meta` docstring 이 옛 판정(`truncated: fetched < total`)을 설명 → 실제 스키마로 갱신.
+- 🟡 **CLI 가 `notice` 를 무시**해 `total_mismatch` 를 "전수 수집"으로 오보 → 분기 추가.
+- 🟡 `__version__` 이 `0.1.0` 으로 방치(실제 0.4.x) → `importlib.metadata` 조회로 변경.
+- 🟡 `collect_groups` 기본 파일명이 `{target}_groups` 고정이라 **두 번째 호출이 첫 산출물을 조용히
+  덮어썼다** → 첫 term 을 파일명에 포함.
+- ⚠️ **`cli.py` 를 임포트하는 테스트가 없어 문법 오류조차 통과했다**(실제로 이번 수정 중 깨진
+  문자열 리터럴이 테스트 52건을 통과했다). 전 모듈 임포트 테스트를 추가했다. 테스트 37 → **52**.
+- 🔵 테스트를 쓰다가 한 겹 더 깊은 오탐을 발견 — `max_records` 가 실제 `total` 과 같으면 전부
+  회수했는데도 `hit_cap` 이 True 였다. `hit_cap = 상한도달 and fetched < total` 로 정정(kci 도 동일).
+
 ### 2026-08-11 (5) — 적대적 검증 반영 (kci 에서 발견된 결함 3종 이식)
 kci 를 실제 반복 호출로 깨보다 나온 결함이 이쪽에도 그대로 있었다. **네 번째 전파 사례**다.
 - 🔴 **`truncated` 오탐 분리** — `fetched < total` 하나로 판정해 페이징을 끝까지 돌았는데도 True 가 떴다

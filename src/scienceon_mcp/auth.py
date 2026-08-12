@@ -39,21 +39,34 @@ def encrypt_accounts(auth_key: str, mac_address: str) -> str:
     return base64.urlsafe_b64encode(ct).decode("ascii")
 
 
+def _get_json(url: str, timeout: int, what: str) -> dict[str, Any]:
+    """토큰 엔드포인트 호출 — **예외 메시지에 URL 을 절대 싣지 않는다.**
+
+    ⚠️ 이 URL 의 쿼리에는 client_id·accounts(AES 페이로드)·refreshToken 이 들어 있다.
+       requests 예외(HTTPError/ConnectionError/Timeout/SSLError)는 메시지에 요청 URL 전체를
+       담으므로, 그대로 올리면 도구의 _safe 를 타고 자격증명이 MCP 응답에 실린다.
+       상태코드와 예외 타입명만 보고한다.
+    """
+    try:
+        resp = requests.get(url, timeout=timeout)
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f"{what} 실패 — 네트워크 오류({type(e).__name__}).") from None
+    if resp.status_code >= 400:
+        raise RuntimeError(f"{what} 실패 — HTTP {resp.status_code}.")
+    return resp.json()
+
+
 def request_token(creds: Credentials, *, timeout: int = 15) -> dict[str, Any]:
     """신규 Access/Refresh 토큰 발급."""
     accounts = quote(encrypt_accounts(creds.auth_key, creds.mac_address))
     url = f"{TOKEN_URL}?client_id={creds.client_id}&accounts={accounts}"
-    resp = requests.get(url, timeout=timeout)
-    resp.raise_for_status()
-    return resp.json()
+    return _get_json(url, timeout, "토큰 발급")
 
 
 def refresh_access_token(creds: Credentials, refresh_token: str, *, timeout: int = 15) -> dict[str, Any]:
     """Refresh Token 으로 Access Token 재발급."""
     url = f"{TOKEN_URL}?refreshToken={refresh_token}&client_id={creds.client_id}"
-    resp = requests.get(url, timeout=timeout)
-    resp.raise_for_status()
-    return resp.json()
+    return _get_json(url, timeout, "토큰 갱신")
 
 
 class TokenManager:
