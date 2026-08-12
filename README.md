@@ -3,6 +3,7 @@
 <!-- mcp-name: io.github.rubatoyd/scienceon-mcp -->
 
 [![CI](https://github.com/rubatoyd/scienceON-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/rubatoyd/scienceON-mcp/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/rubatoyd/scienceON-mcp)](https://github.com/rubatoyd/scienceON-mcp/releases/latest)
 
 KISTI **ScienceON OpenAPI** 문헌 검색·메타데이터 수집기 — **MCP 서버 + CLI**.
 자기 ScienceON API 키만 발급받으면 Claude(또는 CLI)에서 국내외 논문·보고서 서지 메타데이터를
