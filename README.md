@@ -4,6 +4,15 @@
 
 [![CI](https://github.com/rubatoyd/scienceON-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/rubatoyd/scienceON-mcp/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/rubatoyd/scienceON-mcp)](https://github.com/rubatoyd/scienceON-mcp/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/rubatoyd/scienceON-mcp/total?label=downloads)](https://github.com/rubatoyd/scienceON-mcp/releases)
+
+<!-- usage:start -->
+> 📈 **사용량** — 최근 14일 조회 **3**회(고유 2) · 클론 **7**회(고유 5) · 릴리스 자산 누적 다운로드 **33**
+>
+> ![일별 클론·조회 추이](docs/usage.svg)
+>
+> <sub>2026-08-12 자동 갱신 · 전체 이력은 [`docs/usage.csv`](docs/usage.csv). GitHub 트래픽 통계는 14일 창만 제공하므로 이 저장소가 매일 찍어 누적한다.</sub>
+<!-- usage:end -->
 
 KISTI **ScienceON OpenAPI** 문헌 검색·메타데이터 수집기 — **MCP 서버 + CLI**.
 자기 ScienceON API 키만 발급받으면 Claude(또는 CLI)에서 국내외 논문·보고서 서지 메타데이터를
