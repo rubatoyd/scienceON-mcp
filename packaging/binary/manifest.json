@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "scienceon-mcp",
   "display_name": "ScienceON 수집기 (scienceON-mcp)",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "KISTI ScienceON OpenAPI 문헌 검색·메타데이터 수집기 — 다중쿼리·와일드카드·연도범위·언어 필터. 자체완결 바이너리(Python·uv 불필요).",
   "author": { "name": "Yeondong Yang", "url": "https://github.com/rubatoyd/scienceON-mcp" },
   "homepage": "https://github.com/rubatoyd/scienceON-mcp",
