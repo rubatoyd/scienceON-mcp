@@ -11,9 +11,9 @@ KISTI **ScienceON OpenAPI** 문헌 검색·메타데이터 수집기 — **MCP �
 > An MCP server + CLI for KISTI ScienceON OpenAPI. Bring your own API key and let
 > Claude search & collect academic literature metadata in any project.
 
-## 현재 상태 (v0.3.0)
+## 현재 상태 (v0.4.0)
 
-- ✅ 라이브 검증 완료 · pytest 26 + 콜드 스타트 스모크 CI · 도구 annotations
+- ✅ 라이브 검증 완료 · pytest 37 + 콜드 스타트 스모크 CI · 도구 annotations
 - ✅ **공식 MCP 레지스트리 발행됨**: `io.github.rubatoyd/scienceon-mcp`
 - ✅ 자체완결 `.mcpb`(win/mac/linux, Python·uv 불필요) + 경량 `.mcpb` + uvx
 - ⚠️ `mcp` SDK는 **1.x 고정**(`mcp>=1.2.0,<2`) — 2.0 에서 `mcp.server.fastmcp` 가 제거되어 상한 없이는 기동 실패
@@ -115,6 +115,24 @@ claude mcp add scienceon -- uvx --from "git+https://github.com/rubatoyd/scienceO
 > 거의 항상 절단된 것**이고, 그때는 경고 문구가 붙습니다. `meta.union_upper_bound`(실행한 검색축들의
 > total 합 = 합집합 상한) 위로 `max_records` 를 올려 재수집해야 코퍼스가 완결됩니다.
 > 절단된 결과를 완전한 코퍼스로 오인하면 후속 분석이 통째로 무효가 됩니다.
+
+#### ⚠️ 회수량과 `total` 이 다를 때 — 절단인가 아닌가 (v0.4.0)
+
+적대적 검증에서 **API 가 보고한 `total` 이 실제 서빙량보다 클 수 있다**는 것이 확인됐습니다
+(실측: TI '경계선지능' total 263 / 실회수 262, 중복제거 0건). 그래서 두 사건을 **다른 플래그**로 구분합니다.
+
+| 플래그 | 뜻 | 대처 |
+|---|---|---|
+| `truncated: true` | **우리 상한(`max_records`)에 걸렸다** | 상한을 올려 재수집하면 해결됩니다 |
+| `total_mismatch: true` | 페이징을 끝까지 돌았는데 `total` 에 못 미쳤다 | **올려도 늘지 않습니다.** 회수량을 확정 수치로 쓰세요 |
+
+> v0.4.0 이전에는 이 둘을 `truncated` 하나로 뭉쳐, 전수 수집을 마친 뒤에도 "상한을 올리라"는
+> **틀린 조언**이 붙었습니다. 그 값을 읽던 코드가 있다면 의미가 달라졌으니 확인하세요.
+
+**불완전 회수 자동 보정** — 다중 페이지 질의는 호출마다 결과가 흔들립니다(자매 프로젝트 kci 실측:
+동일 조건 3회에 204/204/205, 레코드 합집합 205·교집합 203). 단일 페이지 질의는 안정적입니다.
+그래서 `total` 에 못 미치고 상한도 아니면 **한 번 더 훑어 합집합**을 취합니다.
+`meta.sweeps` 가 1보다 크면 보정이 돌았다는 뜻입니다. 끄려면 `retry_incomplete=0`.
 
 **`scienceON_collect_groups` 가 왜 필요한가** — 단일 검색어로는 못 만드는 코퍼스가 있습니다.
 변별력 있는 단어는 전체(BI)로 그대로 검색하고, 색인이 안 되는 토큰은 제목(TI) 와일드카드 +
