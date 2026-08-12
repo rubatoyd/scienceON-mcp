@@ -130,7 +130,15 @@ class TokenManager:
         if tok is None:
             tok = request_token(self.creds)
         if "access_token" not in tok:
-            raise RuntimeError(f"토큰 발급 실패 — 응답: {tok}")
+            # 🔴 **응답 본문을 그대로 실으면 안 된다.** 토큰 엔드포인트는 실패 응답에도
+            #    `refresh_token`·`client_id` 를 담아 보내고, 이 예외는 도구의 `_safe` 를 타고
+            #    MCP 응답 → LLM 트랜스크립트까지 흘러간다. 적대적 검증에서 실제로 재현됐다
+            #    (`scienceON_status` 응답에 refresh_token 이 그대로 실렸다).
+            #    이 저장소는 `raise_for_status` 로 같은 유형을 이미 한 번 고쳤는데 이 경로만 남아 있었다.
+            #    진단에 필요한 건 **어떤 키가 왔는가**지 값이 아니다.
+            keys = ", ".join(sorted(tok)) or "(빈 응답)"
+            raise RuntimeError(
+                f"토큰 발급 실패 — 응답에 access_token 이 없습니다. 받은 필드: {keys}")
 
         self._tok = tok
         self._exp_epoch = self._parse_expire(tok)

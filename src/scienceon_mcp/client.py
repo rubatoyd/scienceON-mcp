@@ -88,6 +88,11 @@ class ScienceONClient:
         if r.status_code >= 400:
             # ⚠️ raise_for_status() 금지 — 메시지에 token·client_id 가 든 URL 이 그대로 들어간다.
             raise ScienceONError(str(r.status_code), "ScienceON 서버 응답 오류.")
+        # ⚠️ charset 헤더가 없으면 requests 가 Latin-1 로 폴백해 **한글이 통째로 깨진다**
+        #    (적대적 검증에서 `한글 제목` → `í\x95\x9cê¸\x80` 로 재현). 서버가 헤더를 빼먹는
+        #    경우가 실제로 있으므로 UTF-8 로 보정한다. 자매 프로젝트 nl 과 동일 처방.
+        if not r.encoding or r.encoding.lower() in ("iso-8859-1", "latin-1"):
+            r.encoding = r.apparent_encoding or "utf-8"
         _check_xml_error(r.text)
         return r.text
 
@@ -122,11 +127,21 @@ class ScienceONClient:
         #    그러면 결과가 실제로 있는데도 "결과 없음"으로 조용히 오보된다(kci 에서 실측 확인).
         rows = max(1, min(rows, 100))
         max_records = max(1, max_records)
+        # ⚠️ 여러 페이지가 필요하면 **페이지 크기를 최대로 올린다.** rows 는 전송 단위일 뿐
+        #    결과 집합을 바꾸지 않는데, 작게 두면 같은 데이터를 받으려고 요청 수만 늘어난다.
+        #    적대적 검증에서 rows=1·max_records=300 조합이 **300회 요청**을 유발했다 —
+        #    공공 API 에 대한 예의 문제이자 실패 확률·소요시간 문제다. nl 과 동일 처방.
+        if max_records > rows:
+            rows = 100
+        # 그래도 폭주하지 않도록 절대 상한을 둔다(1000 페이지 가드는 너무 헐겁다).
+        max_requests = max(2, -(-max_records // rows) + 2)
+        requests_made = 0
         out: list[Record] = []
         seen: set = set()
         page = 1
         total = 0
-        while len(out) < max_records and page <= 1000:
+        while len(out) < max_records and requests_made < max_requests:
+            requests_made += 1
             total_p, recs, _ = self.search_page(target, query, page=page, rows=rows,
                                                 sort_field=sort_field, include=include)
             if total_p:
