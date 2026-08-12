@@ -127,3 +127,55 @@ def test_search_groups_meta_aggregates(monkeypatch):
     assert meta["truncated"] is True
     assert meta["union_upper_bound"] == 99
     assert "warning" in meta
+
+
+# ── 불완전 회수 보정 (kci 에서 실측된 현상의 이식) ─────────────────────────────
+
+def _rec(cn):
+    return Record(source="ARTI", control_no=cn, title="t", raw={})
+
+
+def test_retry_recovers_records_missed_by_unstable_paging(monkeypatch):
+    """다중 페이지 질의에서 회수량이 흔들릴 때 재스윕으로 total 을 채운다.
+
+    kci 실측: 동일 조건 3회에 204/204/205, 합집합 205·교집합 203.
+    보정 off 면 204 고정, on 이면 205 회수됨을 라이브로 확인했다.
+    """
+    seq = {"n": 0}
+    c = _client_without_init()
+
+    def _page(target, query, *, page=1, rows=100, sort_field="", include=""):
+        seq["n"] += 1
+        if page > 1:
+            return 2, [], ""
+        return 2, [_rec("A" if seq["n"] <= 1 else "B")], ""
+
+    monkeypatch.setattr(c, "search_page", _page)
+    recs, meta = c.search_meta("ARTI", {"TI": "x"}, max_records=100)
+    assert meta["sweeps"] == 2
+    assert meta["fetched"] == 2 == meta["total"]
+    assert meta["total_mismatch"] is False
+    assert {r.control_no for r in recs} == {"A", "B"}
+
+
+def test_retry_can_be_disabled(monkeypatch):
+    c = _client_without_init()
+    monkeypatch.setattr(c, "search_page",
+                        lambda *a, **k: (2, [_rec("A")], "") if k.get("page", 1) == 1 else (2, [], ""))
+    _, meta = c.search_meta("ARTI", {"TI": "x"}, max_records=100, retry_incomplete=0)
+    assert meta["sweeps"] == 1
+    assert meta["total_mismatch"] is True
+
+
+def test_request_size_never_zero(monkeypatch):
+    """rowCount=0 이면 API 가 total 까지 0 으로 준다 → 요청 크기 하한 1."""
+    seen = {}
+    c = _client_without_init()
+
+    def _page(target, query, *, page=1, rows=100, **k):
+        seen["rows"] = rows
+        return (5, [_rec("A")], "") if page == 1 else (5, [], "")
+
+    monkeypatch.setattr(c, "search_page", _page)
+    c.search_meta("ARTI", {"TI": "x"}, max_records=0, rows=0)
+    assert seen["rows"] >= 1

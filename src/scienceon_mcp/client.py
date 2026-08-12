@@ -91,7 +91,8 @@ class ScienceONClient:
         return total, [normalize(r, target) for r in raws], text
 
     def search_meta(self, target: str, query, *, max_records: int = 100, rows: int = 100,
-                    sort_field: str = "", include: str = "") -> tuple[list[Record], dict]:
+                    sort_field: str = "", include: str = "",
+                    retry_incomplete: int = 1) -> tuple[list[Record], dict]:
         """search() + 회수 메타 — 조용한 절단 방지.
 
         meta = {target, query, total, fetched, truncated}
@@ -101,6 +102,10 @@ class ScienceONClient:
         절단 여부를 호출자에게 **반드시** 노출한다 — 상한에 걸린 결과를 완전한 코퍼스로
         오인하면 계량서지·텍스트마이닝 분석 전체가 무효가 된다.
         """
+        # ⚠️ 하한 1 필수 — rowCount=0 이면 API 가 total 까지 0 으로 돌려준다.
+        #    그러면 결과가 실제로 있는데도 "결과 없음"으로 조용히 오보된다(kci 에서 실측 확인).
+        rows = max(1, min(rows, 100))
+        max_records = max(1, max_records)
         out: list[Record] = []
         seen: set = set()
         page = 1
@@ -125,9 +130,46 @@ class ScienceONClient:
                 break
             page += 1
             time.sleep(self.throttle)
+        # ── 불완전 회수 보정 ────────────────────────────────────────────────────
+        # 다중 페이지 질의에서 회수량이 호출마다 흔들린다(kci 실측: 동일 조건 3회에 204/204/205,
+        # 합집합 205·교집합 203). 페이지 경계에서 정렬이 미세하게 바뀌면 한 건이 두 페이지 사이로
+        # 빠지는 것으로 보인다. 단일 페이지 질의는 안정적이었다.
+        # → total 에 못 미쳤고 우리 상한도 아니면 한 번 더 훑어 합집합을 취한다(코퍼스 재현성).
+        sweeps = 1
+        while (retry_incomplete > 0 and total and len(out) < min(total, max_records)
+               and len(out) < max_records):
+            retry_incomplete -= 1
+            sweeps += 1
+            before = len(out)
+            page = 1
+            while len(out) < max_records and page <= 1000:
+                _, recs2, _ = self.search_page(target, query, page=page, rows=rows,
+                                               sort_field=sort_field, include=include)
+                if not recs2:
+                    break
+                for r in recs2:
+                    k = r.control_no or (r.title, r.pub_year)
+                    if k not in seen:
+                        seen.add(k)
+                        out.append(r)
+                if total and page * rows >= total:
+                    break
+                page += 1
+                time.sleep(self.throttle)
+            if len(out) == before:
+                break
+
         out = out[:max_records]
+        # ⚠️ truncated 와 total_mismatch 를 **분리**한다 (2026-08-11 적대적 검증에서 발견).
+        #    예전엔 `fetched < total` 하나로 뭉쳐 있어, 페이징을 끝까지 돌았는데도 truncated=True 가
+        #    떴다(실측: TI '경계선지능' total 263 / 실회수 262, 중복제거 0건).
+        #    API 의 total 은 **실제 서빙량보다 클 수 있다**. 그때 "max_records 를 올리라"는 조언은
+        #    틀린 처방이며 사용자를 무한 재수집으로 몬다.
+        hit_cap = len(out) >= max_records
         return out, {"target": target, "query": query, "total": total, "fetched": len(out),
-                     "truncated": bool(total) and len(out) < total}
+                     "truncated": hit_cap,          # 우리 상한에 걸림 → 올리면 해결된다
+                     "sweeps": sweeps,              # 1보다 크면 불완전 회수를 보정한 것
+                     "total_mismatch": (not hit_cap) and bool(total) and len(out) < total}
 
     def search(self, target: str, query, *, max_records: int = 100, rows: int = 100,
                sort_field: str = "", include: str = "") -> list[Record]:
@@ -184,6 +226,9 @@ class ScienceONClient:
             "max_records": max_records,
             "truncated": bool(stopped_early or len(axes) < planned
                               or any(a["truncated"] for a in axes)),
+            # API 가 보고한 total 이 실제 서빙량보다 큰 축이 하나라도 있으면 표시.
+            # 절단과 달리 max_records 를 올려도 해결되지 않는다 → 조언이 달라야 한다.
+            "total_mismatch": any(a.get("total_mismatch") for a in axes),
         }
         if contains:
             subs = [s.lower() for s in ([contains] if isinstance(contains, str) else list(contains))]
@@ -209,6 +254,13 @@ class ScienceONClient:
                 f"⚠️ 절단됨 — max_records={max_records} 상한에 걸렸습니다. "
                 f"실행한 검색축 {len(axes)}/{planned}개의 total 합은 {meta['union_upper_bound']}건"
                 f"(합집합 상한)입니다. max_records 를 그 위로 올려 재수집하세요."
+            )
+        elif meta["total_mismatch"]:
+            # 상한에 걸리지 않았는데 total 에 못 미친 경우 — 올려도 해결되지 않는다.
+            meta["notice"] = (
+                "ℹ️ API 가 보고한 total 보다 실제 회수량이 적습니다. 페이징은 끝까지 돌았으므로 "
+                "**절단이 아니며 max_records 를 올려도 늘지 않습니다** — API 의 total 이 실제 서빙 "
+                "가능 건수보다 큰 경우입니다(실측 확인). 회수량을 확정 수치로 쓰세요."
             )
         return out, meta
 
@@ -252,7 +304,8 @@ class ScienceONClient:
                 new += 1
             gmetas.append({"field": g.get("field", "BI"), "terms": terms,
                            "union_upper_bound": gm["union_upper_bound"],
-                           "returned": gm["returned"], "truncated": gm["truncated"], "new": new})
+                           "returned": gm["returned"], "truncated": gm["truncated"],
+                           "total_mismatch": gm.get("total_mismatch", False), "new": new})
             if len(out) >= max_records:
                 stopped_early = True
                 break
@@ -266,6 +319,7 @@ class ScienceONClient:
             "max_records": max_records,
             "truncated": bool(stopped_early or len(gmetas) < len(groups)
                               or any(g["truncated"] for g in gmetas)),
+            "total_mismatch": any(g.get("total_mismatch") for g in gmetas),
             "returned": len(out),
         }
         if meta["truncated"]:
@@ -273,6 +327,11 @@ class ScienceONClient:
                 f"⚠️ 절단됨 — max_records={max_records} 상한에 걸렸습니다. "
                 f"실행한 그룹 {len(gmetas)}/{len(groups)}개의 total 합은 "
                 f"{meta['union_upper_bound']}건(합집합 상한)입니다. max_records 를 올려 재수집하세요."
+            )
+        elif meta["total_mismatch"]:
+            meta["notice"] = (
+                "ℹ️ API 가 보고한 total 보다 실제 회수량이 적습니다. 페이징은 끝까지 돌았으므로 "
+                "**절단이 아니며 max_records 를 올려도 늘지 않습니다.** 회수량을 확정 수치로 쓰세요."
             )
         return out, meta
 

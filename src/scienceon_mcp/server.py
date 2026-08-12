@@ -106,17 +106,19 @@ def scienceON_search(query: str | None = None, queries: list[str] | None = None,
     if not terms:
         return {"error": "query 또는 queries 중 하나는 필요합니다."}
     try:
+        eff = max(1, min(rows, 100))   # ⚠️ 하한 1 — rowCount=0 이면 total 까지 0 으로 와 오보된다
         recs, meta = _client().search_terms_meta(
             target, terms, field=field, year=_year_str(year_from, year_to),
-            max_records=min(rows, 100), rows=min(rows, 100),
-            contains=contains, lang=lang)
+            max_records=eff, rows=eff, contains=contains, lang=lang)
     except ScienceONError as e:
         return {"error": str(e)}
-    recs = recs[:rows]
+    recs = recs[:rows] if rows > 0 else []
     out = {"count": len(recs), "total": meta["union_upper_bound"],
            "truncated": meta["truncated"], "records": [r.to_row() for r in recs]}
     if meta.get("warning"):
         out["warning"] = meta["warning"]
+    if meta.get("notice"):
+        out["notice"] = meta["notice"]
     return out
 
 
@@ -169,6 +171,8 @@ def scienceON_export(query: str | None = None, queries: list[str] | None = None,
                                          "returned") if k in meta}}
     if meta.get("warning"):
         out["warning"] = meta["warning"]
+    if meta.get("notice"):
+        out["notice"] = meta["notice"]
     return out
 
 
@@ -218,6 +222,8 @@ def scienceON_collect_groups(groups: list[dict], target: str = "ARTI",
         out["records_truncated_for_response"] = len(recs) > 100
     if meta.get("warning"):
         out["warning"] = meta["warning"]
+    if meta.get("notice"):
+        out["notice"] = meta["notice"]
     return out
 
 

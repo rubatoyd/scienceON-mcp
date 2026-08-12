@@ -61,6 +61,19 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 - ✅ pytest 11종 + GitHub Actions CI
 - ⏳ (선택) `.mcpb` 데스크톱 실설치 검증, ROADMAP(docs/ROADMAP.md) P0~P3
 
+### 2026-08-11 (5) — 적대적 검증 반영 (kci 에서 발견된 결함 3종 이식)
+kci 를 실제 반복 호출로 깨보다 나온 결함이 이쪽에도 그대로 있었다. **네 번째 전파 사례**다.
+- 🔴 **`truncated` 오탐 분리** — `fetched < total` 하나로 판정해 페이징을 끝까지 돌았는데도 True 가 떴다
+  (실측: TI '경계선지능' total 263 / 실회수 262, 중복제거 0건). API 의 total 은 실제 서빙량보다 클 수
+  있고, 그때 "max_records 를 올리라"는 경고는 틀린 처방이다.
+  → `truncated`(우리 상한)와 `total_mismatch`(API total 불일치)를 분리, `notice` 로 다른 조언을 준다.
+- 🔴 **`rows<=0` 이 total 을 감춤** — `rowCount=0` 이면 total 까지 0 으로 와 "결과 없음"으로 오보된다.
+  → 요청 크기 하한 1 로 클램프(반환 건수는 요청대로 0).
+- 🔴 **다중 페이지 질의 결과 불안정 보정** — kci 실측으로 동일 조건 3회에 204/204/205, 합집합 205·
+  교집합 203 을 확인했다. `retry_incomplete=1`(기본)로 total 미달 시 한 번 더 훑어 합집합을 취한다.
+  `meta.sweeps` 로 보정 여부가 드러난다. 끄려면 `retry_incomplete=0`.
+- 테스트 34 → **37**.
+
 ### 2026-08-11 (4) — 전송 선택 추가 (Claude 전용 탈피)
 - `mcp.run()` 이 인자 없이 호출돼 **stdio 전용**이었다. `main()` 에 `--transport
   stdio|sse|streamable-http` + `--host`/`--port` 를 붙였다(환경변수 `SCIENCEON_MCP_TRANSPORT`/
