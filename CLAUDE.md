@@ -93,6 +93,19 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 - ⚠️ **자매 프로젝트의 *API 사실* 을 이식하지 말 것** — nl 문서에 KCI 에서 검증된 사실을
   근거 없이 옮겼다가 정정했다. **방법론은 옮기되 API 동작은 각자 실측한다.**
 
+### 2026-08-11 (7) — 출력 경로 이탈 차단
+세 번째 자매 프로젝트 `nl-openapi-mcp` 에서 발견돼 이쪽에서도 **그대로 재현**됐다.
+`export()` 가 `out_dir / f"{name}{ext}"` 를 쓰는데 `name` 은 `.replace(" ", "_")[:60]` 만 거쳐
+경로 구분자·`..` 가 통과했다.
+```
+name="../escaped" → …\Temp\<tmp>\escaped.json     ← out_dir 밖
+name="sub/dir/x"  → FileNotFoundError (조용한 실패)
+```
+⚠️ **`name` 은 MCP 도구 인자이고 미지정 시 검색어가 그대로 들어온다** — 사용자 입력이 파일
+경로에 직접 닿는다. `exporters.safe_name()` 신설하고 **`export()` 한 곳에서** 적용한다
+(호출부마다 고치면 새 호출부에서 또 샌다). 최종 경로가 `out_dir` 안인지 `resolve()` 로 이중 확인.
+한글 파일명은 보존된다. 회귀 테스트 15건 추가(52 → 67). kci 도 동일 수정.
+
 ### 2026-08-11 (6) — 코드 리뷰 지적 7종 반영
 `/code-review ultra` 를 리뷰 전용 PR#1 에 돌려 나온 지적. **최우선은 자격증명 유출이었다.**
 - 🔴 **자격증명이 MCP 응답으로 새어나갔다** — `r.raise_for_status()` 는 예외 메시지에 **요청 URL
