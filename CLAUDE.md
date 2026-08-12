@@ -67,7 +67,7 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 > 이 저장소의 관례대로 "한쪽에서 고친 결함은 다른 쪽에도 있다고 가정하고 확인"했고,
 > **확인 결과를 함께 적는다.**
 
-- 🔴 **확인된 결함: 출력 파일 경로 이탈 (미수정)** — `scienceON_export`·`scienceON_collect_groups`
+- ✅ **출력 파일 경로 이탈 — 수정 완료**(2026-08-12, 커밋 `cc003fd`) — `scienceON_export`·`scienceON_collect_groups`
   의 `nm = (name or …).replace(" ", "_")[:60]` 와 `exporters.export` 의 `out / f"{name}{ext}"`
   조합이 **`out_dir` 밖에 파일을 쓴다.** 실제로 재현했다:
   `name="../escaped"` → `…\Temp\<tmp>\escaped.json`(밖), `name="..\esc2"` → 동일,
@@ -75,7 +75,8 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
   `name` 은 MCP 도구 인자이고 미지정 시 **검색어가 그대로 파일명이 되므로** 사용자 입력이
   경로에 직접 닿는다. nl 처방: `exporters.safe_name()` 을 만들어 호출부마다가 아니라
   **`export()` 한 곳에서** 정규화(경로 구분자·`..`·제어문자·Windows 예약명·후행 점)하고,
-  최종 경로가 `out_dir` 안인지 `resolve()` 로 이중 확인. ⏭️ 이 저장소는 아직 미적용.
+  최종 경로가 `out_dir` 안인지 `resolve()` 로 이중 확인.
+  ✅ 적용·검증 완료 — 재현 케이스 6종 전부 봉쇄. 회귀는 `tests/test_output_path.py`.
 - ⚠️ **적대적 검증은 실제 HTTP 왕복으로** — `_call`(여기서는 `session.get`)을 monkeypatch 하는
   테스트는 **전송·인코딩 감지·재시도/백오프·URL 인코딩 계층을 통째로 건너뛴다.**
   nl 에서 로컬 `ThreadingHTTPServer` 로 실제 소켓 반복 호출(검사 9,282건)하니 그 층에서만
