@@ -135,9 +135,24 @@ claude mcp add scienceon -- uvx --from "git+https://github.com/rubatoyd/scienceO
 OpenAI Agents SDK · MCP SDK 로 만든 자체 클라이언트 등. 등록 형태는 위 `claude_desktop_config.json`
 예시의 `command`/`args`/`env` 3요소를 각 클라이언트 설정에 그대로 옮기면 됩니다.
 
-**제약 2가지** — 전송이 **stdio 전용**이라 원격 HTTP/SSE 호스팅은 지원하지 않습니다(각 클라이언트가
-로컬 서브프로세스로 띄우는 방식만 가능). 도구 설명이 **한국어**라 한국어를 다루는 모델이어야
-도구 선택이 정확합니다.
+#### 전송 방식 — stdio(기본) · SSE · Streamable HTTP
+
+로컬 서브프로세스(stdio)뿐 아니라 **HTTP 로도 띄울 수 있습니다.** 원격 호스팅이나 stdio 를 못 쓰는
+클라이언트를 위한 경로입니다.
+
+```bash
+scienceon-mcp                                 # 기본: stdio (기존과 동일)
+scienceon-mcp --transport streamable-http     # http://127.0.0.1:8000/mcp
+scienceon-mcp --transport sse --port 9000     # http://127.0.0.1:9000/sse
+```
+환경변수로도 지정 가능: `SCIENCEON_MCP_TRANSPORT` · `SCIENCEON_MCP_HOST` · `SCIENCEON_MCP_PORT`.
+
+> ⚠️ **HTTP 전송에는 인증이 없습니다.** 기본 바인드는 루프백(`127.0.0.1`)이라 같은 PC 에서만
+> 접근됩니다. `--host 0.0.0.0` 으로 외부에 열면 **자격증명을 품은 서버를 그대로 공개하는 것**과
+> 같습니다 — 신뢰된 망에서만, 필요하면 앞단에 리버스 프록시·인증을 두고 쓰세요.
+> 서버도 기동 시 경고를 찍습니다.
+
+**남은 제약** — 도구 설명이 **한국어**라 한국어를 다루는 모델이어야 도구 선택이 정확합니다.
 
 ## 5) CLI 사용 (배치·재현)
 

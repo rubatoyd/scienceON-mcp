@@ -61,6 +61,17 @@ reference/      # KISTI 매뉴얼·공식 샘플(gitignore, 비공개)
 - ✅ pytest 11종 + GitHub Actions CI
 - ⏳ (선택) `.mcpb` 데스크톱 실설치 검증, ROADMAP(docs/ROADMAP.md) P0~P3
 
+### 2026-08-11 (4) — 전송 선택 추가 (Claude 전용 탈피)
+- `mcp.run()` 이 인자 없이 호출돼 **stdio 전용**이었다. `main()` 에 `--transport
+  stdio|sse|streamable-http` + `--host`/`--port` 를 붙였다(환경변수 `SCIENCEON_MCP_TRANSPORT`/
+  `_HOST`/`_PORT` 도 지원). 소스에 Claude 결합 코드는 원래 없었으므로 이로써 원격 호스팅·비 stdio
+  클라이언트까지 열린다. kci 와 동일 처방.
+- ⚠️ **기본값은 stdio 로 못박아 둘 것** — 기존 등록은 인자 없이 서버를 띄우므로 기본이 바뀌면
+  모든 사용자의 MCP 가 한 번에 죽는다. 회귀 테스트로 고정했다.
+- ⚠️ **HTTP 전송에는 인증이 없다.** 기본 바인드는 루프백. 외부 노출은 자격증명을 공개하는 것과 같아
+  기동 시 경고를 찍는다. 미지의 CLI 인자·비숫자 포트 환경변수는 서버를 죽이지 않고 무시한다.
+- 검증: stdio 회귀 + `streamable-http` 실기동(HTTP 200) + 테스트 26 → **34**.
+
 ### 2026-08-11 (3) — v0.3.0: 예외 누수 차단 · annotations · 다중그룹 MCP 도구
 kci 와의 **비대칭 해소**가 주제다. 이번 세션에서 "한쪽에서 고친 결함이 다른 쪽에 남아 있는" 패턴이
 세 번째 반복됐다(mcp 상한 → 조용한 절단 → 예외 누수).

@@ -8,7 +8,10 @@ Claude 등 MCP 클라이언트에 검색/상세/수집 도구를 노출한다.
 """
 from __future__ import annotations
 
+import argparse
 import functools
+import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -218,8 +221,46 @@ def scienceON_collect_groups(groups: list[dict], target: str = "ARTI",
     return out
 
 
-def main() -> None:
-    mcp.run()
+def _env_port(name: str) -> int | None:
+    """숫자가 아니면 조용히 무시 — 잘못된 환경변수 하나로 서버가 못 뜨면 안 된다."""
+    raw = (os.environ.get(name) or "").strip()
+    return int(raw) if raw.isdigit() else None
+
+
+def main(argv: list[str] | None = None) -> None:
+    """MCP 서버 기동.
+
+    기본은 **stdio** — 클라이언트가 로컬 서브프로세스로 띄우는 방식이고 기존 동작과 동일하다.
+    `--transport sse|streamable-http` 로 HTTP 전송도 된다. MCP 를 지원하는 어떤 클라이언트든
+    (Cursor·Cline·Zed·OpenAI Agents SDK·자체 에이전트) 붙을 수 있고, 원격 호스팅도 가능하다.
+
+    ⚠️ **HTTP 전송에는 인증이 없다.** 기본 바인드는 루프백(127.0.0.1)이다. 외부 주소에 열면
+       자격증명을 품은 서버를 그대로 공개하는 것과 같으므로 신뢰된 망에서만 쓸 것.
+    """
+    p = argparse.ArgumentParser(prog="scienceon-mcp", description="KISTI ScienceON MCP 서버")
+    p.add_argument("--transport", choices=["stdio", "sse", "streamable-http"],
+                   default=os.environ.get("SCIENCEON_MCP_TRANSPORT") or "stdio",
+                   help="전송 방식 (기본 stdio). 환경변수 SCIENCEON_MCP_TRANSPORT 로도 지정 가능.")
+    p.add_argument("--host", default=os.environ.get("SCIENCEON_MCP_HOST"),
+                   help="HTTP 전송 바인드 주소 (기본 127.0.0.1 — 루프백)")
+    p.add_argument("--port", type=int, default=_env_port("SCIENCEON_MCP_PORT"),
+                   help="HTTP 전송 포트 (기본 8000)")
+    # 클라이언트가 예기치 않은 인자를 넘겨도 서버는 떠야 한다 → 미지의 인자는 경고만 하고 무시
+    args, unknown = p.parse_known_args(argv)
+    if unknown:
+        print(f"[scienceon-mcp] 알 수 없는 인자 무시: {unknown}", file=sys.stderr)
+    if args.host:
+        mcp.settings.host = args.host
+    if args.port:
+        mcp.settings.port = args.port
+    if args.transport != "stdio":
+        path = mcp.settings.sse_path if args.transport == "sse" else mcp.settings.streamable_http_path
+        print(f"[scienceon-mcp] {args.transport} 전송 — "
+              f"http://{mcp.settings.host}:{mcp.settings.port}{path}", file=sys.stderr)
+        if mcp.settings.host not in ("127.0.0.1", "localhost", "::1"):
+            print("[scienceon-mcp] ⚠️ 루프백 외 주소에 바인드했습니다. HTTP 전송에는 인증이 없어 "
+                  "자격증명을 가진 서버가 그대로 노출됩니다. 신뢰된 망에서만 사용하세요.", file=sys.stderr)
+    mcp.run(transport=args.transport)
 
 
 if __name__ == "__main__":
