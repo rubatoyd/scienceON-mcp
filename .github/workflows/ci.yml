@@ -20,3 +20,18 @@ jobs:
         run: uv sync
       - name: Run tests
         run: uv run pytest -q
+
+      # ── @HEAD 운영의 안전망 ──────────────────────────────────────────────────
+      # MCP 등록이 uvx --from git+…(HEAD)를 쓰므로 main 이 곧 프로덕션이다.
+      # uv.lock 은 개발용이고 클라이언트 경로는 lock 을 보지 않으므로 **신규 해석**으로 검사한다.
+      - name: 신규 해석에서 mcp 1.x 확인 (fastmcp 존재)
+        run: |
+          uv run --no-project --with . python -c "import mcp.server.fastmcp; print('mcp.server.fastmcp OK')"
+
+      - name: 콜드 스타트 스모크 (클라이언트와 동일 경로)
+        run: |
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            | uvx --from . scienceon-mcp > handshake.jsonl
+          cat handshake.jsonl
+          grep -q '"serverInfo"' handshake.jsonl || { echo "::error::MCP handshake 실패 — 클라이언트가 이 커밋으로 기동할 수 없다"; exit 1; }
+          echo "handshake OK"
