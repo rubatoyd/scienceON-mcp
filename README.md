@@ -7,11 +7,11 @@
 [![Downloads](https://img.shields.io/github/downloads/rubatoyd/scienceON-mcp/total?label=downloads)](https://github.com/rubatoyd/scienceON-mcp/releases)
 
 <!-- usage:start -->
-> 📈 **사용량** — 최근 14일 조회 **22**회(고유 3) · 클론 **400**회(고유 128) · 릴리스 자산 누적 다운로드 **64**
+> 📈 **사용량** — 최근 14일 조회 **22**회(고유 3) · 클론 **405**회(고유 131) · 릴리스 자산 누적 다운로드 **65**
 >
 > ![일별 클론·조회 추이](docs/usage.svg)
 >
-> <sub>2026-08-15 자동 갱신 · 전체 이력은 [`docs/usage.csv`](docs/usage.csv). GitHub 트래픽 통계는 14일 창만 제공하므로 이 저장소가 매일 찍어 누적한다.</sub>
+> <sub>2026-08-16 자동 갱신 · 전체 이력은 [`docs/usage.csv`](docs/usage.csv). GitHub 트래픽 통계는 14일 창만 제공하므로 이 저장소가 매일 찍어 누적한다.</sub>
 <!-- usage:end -->
 
 KISTI **ScienceON OpenAPI** 문헌 검색·메타데이터 수집기 — **MCP 서버 + CLI**.
