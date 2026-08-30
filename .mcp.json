@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "scienceon": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/rubatoyd/scienceON-mcp", "scienceon-mcp"],
+      "env": {
+        "SCIENCEON_AUTH_KEY": "${SCIENCEON_AUTH_KEY:-}",
+        "SCIENCEON_CLIENT_ID": "${SCIENCEON_CLIENT_ID:-}",
+        "SCIENCEON_MAC_ADDRESS": "${SCIENCEON_MAC_ADDRESS:-}",
+        "SCIENCEON_ACCOUNT_ID": "${SCIENCEON_ACCOUNT_ID:-}",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}
